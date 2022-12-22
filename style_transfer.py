@@ -10,10 +10,15 @@ import torchvision
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
 
+# this is the bit that does all the inferencing
 class TestOptions():
     def __init__(self):
 
+        # all the bits of info required for inferencing
+        # look at the help argument to see what each one means
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
+
+        # there are default parameters which are OVERWRITTEN when the user passes their own arguments
         self.parser.add_argument("--content", type=str, default='./data/content/081680.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
         self.parser.add_argument("--style_id", type=int, default=53, help="the id of the style image")
@@ -34,8 +39,8 @@ class TestOptions():
             if os.path.exists(os.path.join(self.opt.model_path, self.opt.style, 'refined_exstyle_code.npy')):
                 self.opt.exstyle_name = 'refined_exstyle_code.npy'
             else:
-                self.opt.exstyle_name = 'exstyle_code.npy'        
-        args = vars(self.opt)
+                self.opt.exstyle_name = 'exstyle_code.npy'     
+        args = vars(self.opt) 
         print('Load options')
         for name, value in sorted(args.items()):
             print('%s: %s' % (str(name), str(value)))
