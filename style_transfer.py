@@ -33,53 +33,78 @@ class TestOptions():
         self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
         self.parser.add_argument("--exstyle_name", type=str, default=None, help="name of the extrinsic style codes")
 
+        """
+        What is the extrinsic style?
+        """
+
     def parse(self):
+        # parsing and returning all the arguments passed in by the user
         self.opt = self.parser.parse_args()
         if self.opt.exstyle_name is None:
             if os.path.exists(os.path.join(self.opt.model_path, self.opt.style, 'refined_exstyle_code.npy')):
                 self.opt.exstyle_name = 'refined_exstyle_code.npy'
             else:
                 self.opt.exstyle_name = 'exstyle_code.npy'     
-        args = vars(self.opt) 
+        args = vars(self.opt) # converting to a dictionary
         print('Load options')
         for name, value in sorted(args.items()):
             print('%s: %s' % (str(name), str(value)))
         return self.opt
     
+"""
+WE ARE NOT IN THE CLASS ANYMORE!
+"""
 def run_alignment(args):
+    # pre-processing, just focusing on the face and then cropping everything else
     import dlib
     from model.encoder.align_all_parallel import align_face
     modelname = os.path.join(args.model_path, 'shape_predictor_68_face_landmarks.dat')
     if not os.path.exists(modelname):
+        print("is downloading the .dat file")
         import wget, bz2
         wget.download('http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2', modelname+'.bz2')
         zipfile = bz2.BZ2File(modelname+'.bz2')
         data = zipfile.read()
         open(modelname, 'wb').write(data) 
+    else: 
+        print("no download necessary")
     predictor = dlib.shape_predictor(modelname)
     aligned_image = align_face(filepath=args.content, predictor=predictor)
     return aligned_image
 
+# check if we have a GPU and if so, we use that
+# otherwise is done on the CPU
+def get_default_device():
+    """Pick GPU if available, else CPU"""
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    else:
+        return torch.device('cpu')
 
+# entry point to the code
 if __name__ == "__main__":
-    device = "cuda"
+    device = "cuda" # change later on to use get_default_device()
 
     parser = TestOptions()
-    args = parser.parse()
+    args = parser.parse() # this method actually prints out all the arguments
     print('*'*98)
     
+    # transforming the data before putting it through the model
     transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5,0.5,0.5]),
     ])
     
     generator = DualStyleGAN(1024, 512, 8, 2, res_index=6)
-    generator.eval()
+    generator.eval() # in evaluation mode, doesn't keep track of gradients or anything
 
+    # loading all the weights - i.e. the pre-trained model 
     ckpt = torch.load(os.path.join(args.model_path, args.style, args.model_name), map_location=lambda storage, loc: storage)
     generator.load_state_dict(ckpt["g_ema"])
     generator = generator.to(device)
 
+    # not fully sure what is happening here? Loading in another model - the encoder?
+    ###########################################################################################
     model_path = os.path.join(args.model_path, 'encoder.pt')
     ckpt = torch.load(model_path, map_location='cpu')
     opts = ckpt['opts']
@@ -93,7 +118,9 @@ if __name__ == "__main__":
     exstyles = np.load(os.path.join(args.model_path, args.style, args.exstyle_name), allow_pickle='TRUE').item()
 
     print('Load models successfully!')
-    
+    ###########################################################################################
+
+    # disable gradient calculation
     with torch.no_grad():
         viz = []
         # load content image
@@ -135,6 +162,7 @@ if __name__ == "__main__":
 
     print('Generate images successfully!')
     
+    # saving the generated images to disk
     save_name = args.name+'_%d_%s'%(args.style_id, os.path.basename(args.content).split('.')[0])
     save_image(torchvision.utils.make_grid(F.adaptive_avg_pool2d(torch.cat(viz, dim=0), 256), 4, 2).cpu(), 
                os.path.join(args.output_path, save_name+'_overview.jpg'))
