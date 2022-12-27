@@ -9,6 +9,7 @@ from torch.nn import functional as F
 import torchvision
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
+from PIL import Image
 
 # this is the bit that does all the inferencing
 class TestOptions():
@@ -19,7 +20,7 @@ class TestOptions():
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
 
         # there are default parameters which are OVERWRITTEN when the user passes their own arguments
-        self.parser.add_argument("--content", type=str, default='./data/content/081680.jpg', help="path of the content image")
+        self.parser.add_argument("--content", type=str, default='./data/content/randomface.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
         self.parser.add_argument("--style_id", type=int, default=53, help="the id of the style image")
         self.parser.add_argument("--truncation", type=float, default=0.75, help="truncation for intrinsic style code (content)")
@@ -81,6 +82,16 @@ def get_default_device():
     else:
         return torch.device('cpu')
 
+def load_image_grey(filename):
+    transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5],std=[0.5]),
+    ])
+    
+    img = Image.open(filename).convert('L')
+    img = transform(img)
+    return img.unsqueeze(dim=0) 
+
 # entry point to the code
 if __name__ == "__main__":
     device = "cuda" # change later on to use get_default_device()
@@ -95,27 +106,30 @@ if __name__ == "__main__":
     transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5,0.5,0.5]),
     ])
     
-    generator = DualStyleGAN(1024, 512, 8, 2, res_index=6)
+    generator = DualStyleGAN(1024, 512, 8, 2, res_index=6) # TODO: look at the generator code next
     generator.eval() # in evaluation mode, doesn't keep track of gradients or anything
 
     # loading all the weights - i.e. the pre-trained model 
     ckpt = torch.load(os.path.join(args.model_path, args.style, args.model_name), map_location=lambda storage, loc: storage)
-    generator.load_state_dict(ckpt["g_ema"])
-    generator = generator.to(device)
+    generator.load_state_dict(ckpt["g_ema"]) # moving the trained weights into the generator?
+    generator = generator.to(device) # moving to GPU
 
     # not fully sure what is happening here? Loading in another model - the encoder?
+    # I think the encoder is the thing that "encodes" the actual user image
     ###########################################################################################
     model_path = os.path.join(args.model_path, 'encoder.pt')
     ckpt = torch.load(model_path, map_location='cpu')
     opts = ckpt['opts']
     opts['checkpoint_path'] = model_path
-    opts = Namespace(**opts)
+    opts = Namespace(**opts) # passing in keyword arguments
     opts.device = device
-    encoder = pSp(opts)
+    encoder = pSp(opts) # TODO: what is pSp?
     encoder.eval()
     encoder.to(device)
 
+    # some sort of numpy array -> something about an extrinsic style?
     exstyles = np.load(os.path.join(args.model_path, args.style, args.exstyle_name), allow_pickle='TRUE').item()
+    print(exstyles['Cartoons_00440_04.jpg'].shape)
 
     print('Load models successfully!')
     ###########################################################################################
@@ -129,19 +143,40 @@ if __name__ == "__main__":
             I = F.adaptive_avg_pool2d(I, 1024)
         else:
             I = load_image(args.content).to(device)
-        viz += [I]
+        viz += [I] # list contains the image
 
         # reconstructed content image and its intrinsic style code
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
-        viz += [img_rec]
+        viz += [img_rec] # adding another thing to the list? some sort of modification to the image maybe?
 
         stylename = list(exstyles.keys())[args.style_id]
-        latent = torch.tensor(exstyles[stylename]).to(device)
+
+        # Instead of exstyles[stylename], provide your own image by using OpenCV or PIL, and then converting into the the same shape as 
+        # exstyles[stylename]
+        #(1, 18, 512) shape of tensor
+       
+        # PIL image
+        x = load_image_grey('test2.png')
+        #print(x.shape)
+        x = x.reshape((1,18,512))
+        # print(x.shape)
+        # x = x.crop((left, top, right, bottom))
+
+        # latent = torch.tensor(exstyles[stylename]).to(device) # provide any other type of image
+
+        # print(exstyles[stylename].shape)
+        latent = torch.tensor(x).to(device) # provide any other type of image
+        #print(latent.shape)
+        # read as grayscale
+        # from the top, crop the image
+        # 18x512 = 9216
+        # 96x96 = 9216
+
         if args.preserve_color:
             latent[:,7:18] = instyle[:,7:18]
-        # extrinsic styte code
+        # extrinsic style code
         exstyle = generator.generator.style(latent.reshape(latent.shape[0]*latent.shape[1], latent.shape[2])).reshape(latent.shape)
 
         # load style image if it exists
@@ -150,7 +185,7 @@ if __name__ == "__main__":
             S = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
             viz += [S]
 
-        # style transfer 
+        # style transfer - WHERE the image is generated
         # input_is_latent: instyle is not in W space
         # z_plus_latent: instyle is in Z+ space
         # use_res: use extrinsic style path, or the style is not transferred

@@ -1,0 +1,2 @@
+**- Ability to select *ANY* cartoon character as the reference style image - most achievable
+- Select more than one cartoon character as the reference style image - changing the cost/loss function
