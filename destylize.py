@@ -10,7 +10,7 @@ from torchvision import transforms
 from torch.nn import functional as F
 import torchvision
 from PIL import Image
-from tqdm import tqdm
+from tqdm import tqdm # this module handles progress bars (mentioned in GAN tutorial)
 import math
 
 from model.stylegan.model import Generator
