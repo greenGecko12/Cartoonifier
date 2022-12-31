@@ -20,7 +20,7 @@ class TestOptions():
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
 
         # there are default parameters which are OVERWRITTEN when the user passes their own arguments
-        self.parser.add_argument("--content", type=str, default='./data/content/randomface.jpg', help="path of the content image")
+        self.parser.add_argument("--content", type=str, default='./data/content/test_face.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
         self.parser.add_argument("--style_id", type=int, default=53, help="the id of the style image")
         self.parser.add_argument("--truncation", type=float, default=0.75, help="truncation for intrinsic style code (content)")
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     opts['checkpoint_path'] = model_path
     opts = Namespace(**opts) # passing in keyword arguments
     opts.device = device
-    encoder = pSp(opts) # TODO: what is pSp? I think pSp is the thing that generates the middle image in the 3 image grid
+    encoder = pSp(opts) # TODO: what is pSp? (Pixel2style2pixel) I think pSp is the thing that generates the middle image in the 3 image grid
     encoder.eval()
     encoder.to(device)
     ##############################################################################################
@@ -216,6 +216,6 @@ if __name__ == "__main__":
     save_name = args.name+'_%d_%s'%(args.style_id, os.path.basename(args.content).split('.')[0])
     save_image(torchvision.utils.make_grid(F.adaptive_avg_pool2d(torch.cat(viz, dim=0), 256), 4, 2).cpu(), 
                os.path.join(args.output_path, save_name+'_overview.jpg'))
-    save_image(img_gen[0].cpu(), os.path.join(args.output_path, save_name+'.jpg'))
+    # save_image(img_gen[0].cpu(), os.path.join(args.output_path, save_name+'.jpg'))
 
     print('Saved images successfully!')

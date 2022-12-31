@@ -1,0 +1,76 @@
+Although StyleGAN provides inherent exemplar-based single-domain style mixing by latent swapping [1,17], such single-domain-oriented operation is counter-intuitive and incompetent for style transfer involving a source domain and a target domain. This is because misalignment between these two domains may lead to unwanted artifacts during style mixing, especially for domain-specific structures.
+
+What is latent swapping?
+
+
+ DualStyle-
+GAN retains an intrinsic style path of StyleGAN to control
+the style of the original domain, while adding an extrinsic
+style path to model and control the style of the target ex-
+tended domain, which naturally correspond to the content
+path and style path in the standard style transfer paradigm
+
+Moreover, the extrinsic style path inherits the hierarchical
+architecture from StyleGAN to modulate structural styles in
+coarse-resolution layers and color styles in fine-resolution
+layers for flexible multi-level style manipulations.
+
+
+In summary, our contributions are threefold:
+• We propose a novel DualStyleGAN to characterize and
+control the intrinsic and extrinsic styles for exemplar-
+based high-resolution portrait style transfer, requiring
+only a few hundred style examples, which achieves
+superior performance over state-of-the-art methods in
+high-quality and diverse artistic portrait generation.
+• We design a principled extrinsic style path to introduce
+style features from external domains via fine-tuning
+and to provide hierarchical style manipulation in terms
+of both color and structure.
+• We propose a novel progressive fine-tuning scheme for
+robust transfer learning over networks with architec-
+ture modifications.
+
+
+Our method follows the fine-
+tuning framework of StyleGAN, which is efficient in creat-
+ing high-resolution portraits and provides flexible hierarchi-
+cal style control beyond the capability of above methods.
+
+
+
+
+Adding an extrinsic style path to the original StyleGAN
+architecture is non-trivial for our task as it risks altering the
+generative space and behavior of the pre-trained StyleGAN.
+To overcome this challenge, we present effective ways and
+insights to design the extrinsic style path and train Dual-
+StyleGAN. 1) Model design: based on the analysis on the
+fine-tuning behavior of StyleGAN, we propose to introduce
+the extrinsic style in a residual manner to the convolution
+layers, which can well approximate how fine-tuning affects
+the convolution layers of StyleGAN. We show that such de-
+sign enables DualStyleGAN to effectively modulate the key
+structural styles. 2) Model training: we introduce a novel
+progressive fine-tuning methodology, where the extrinsic
+style path is first elaborately initialized so that DualStyle-
+GAN retains the generative space of StyleGAN for seam-
+less transfer learning. Then, we start out training DualStyle-
+GAN with an easy style transfer task and then gradually increases the task difficulty, to progressively translate its gen-
+erative space to the target domain. In addition, we present
+a facial destylization method to provide face-portrait pairs,
+serving as supervision to promote the model to learn diverse
+styles and avoid mode collapse.
+
+
+Our goal is to build DualStyleGAN based on a pre-
+trained StyleGAN, which can be transferred to a new do-
+main and characterize the styles of both the original and the
+extended domains. Unconditional fine-tuning translates the
+StyleGAN generative space as a whole, leading to the loss
+of diversity of the captured styles, as illustrated in Fig. 2.
+Our key idea is to seek valid supervision to learn diverse
+styles (Sec. 3.1), and to explicitly model the two kinds of
+styles with two individual style paths (Sec. 3.2). We train
+DualStyleGAN with a principled progressive strategy for
+robust conditional fine-tuning.
