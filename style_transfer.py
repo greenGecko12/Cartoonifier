@@ -99,7 +99,7 @@ def load_image_grey(filename):
 
 # entry point to the code
 if __name__ == "__main__":
-    device = "cuda"
+    device = get_default_device()
 
     parser = TestOptions()
     args = parser.parse() # this method actually prints out all the arguments

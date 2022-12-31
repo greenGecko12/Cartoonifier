@@ -20,3 +20,8 @@ model/stylegan/op/__pycache__/conv2d_gradfix.cpython-38.pyc
 model/stylegan/op/__pycache__/fused_act.cpython-38.pyc
 model/stylegan/op/__pycache__/upfirdn2d.cpython-38.pyc
 Paper.pdf
+checkpoint/shape_predictor_68_face_landmarks.dat
+checkpoint/generator-pretrain.pt
+checkpoint/model_ir_se50.pth
+checkpoint/stylegan2-ffhq-config-f.pt
+checkpoint/cartoon/finetune-000600.pt
