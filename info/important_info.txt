@@ -1,0 +1,32 @@
+falcon.sbatch eagle.sbatch are the shell scripts that enable the GAN to run on the DCS batch compute system
+
+run this command: [export CXX=g++] before submitting a job to DCS batch compute
+export CUDA_HOME=/local/java/cuda-10.1
+export CUDA_HOME=/local/java/cuda-11.0
+
+
+CUDA version: V11.6.55
+
+PyTorch version 1.10 is being used (the batch compute GPUs need at least version 1.12).
+
+One file: 'instyle_code.npy' is not available on the links they shared -> hopefully this isn't too important
+
+- pytorch=1.13.0=py3.8_cuda11.6_cudnn8.3.2_0
+- torchaudio=0.13.0=py38_cu116
+- torchvision=0.14.0=py38_cu116
+
+
+
+GAN stacking - piping output of one GAN into another GAN
+Go from complex representation to simple rep and then back to complex representation
+
+
+old PyTorch YAML:
+
+pytorch=1.7.1=py3.8_cuda10.1.243_cudnn7.6.3_0
+torchaudio=0.7.2=py38
+torchvision=0.8.2=py38_cu101
+
+
+
+conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.6 -c pytorch -c conda-forge

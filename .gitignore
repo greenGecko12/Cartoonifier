@@ -33,3 +33,4 @@ checkpoint/generator-pretrain.pt
 checkpoint/model_ir_se50.pth
 checkpoint/stylegan2-ffhq-config-f.pt
 checkpoint/cartoon/finetune-000600.pt
+logs

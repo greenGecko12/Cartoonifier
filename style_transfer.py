@@ -20,7 +20,7 @@ class TestOptions():
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
 
         # there are default parameters which are OVERWRITTEN when the user passes their own arguments
-        self.parser.add_argument("--content", type=str, default='./data/content/test_face.jpg', help="path of the content image")
+        self.parser.add_argument("--content", type=str, default='./data/content/randomface.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
         self.parser.add_argument("--style_id", type=int, default=53, help="the id of the style image")
         self.parser.add_argument("--truncation", type=float, default=0.75, help="truncation for intrinsic style code (content)")
@@ -99,7 +99,7 @@ def load_image_grey(filename):
 
 # entry point to the code
 if __name__ == "__main__":
-    device = get_default_device()
+    device = 'cuda'
 
     parser = TestOptions()
     args = parser.parse() # this method actually prints out all the arguments
@@ -125,6 +125,8 @@ if __name__ == "__main__":
     # TODO: investigate this section of code a little bit more
     ###########################################################################################
     model_path = os.path.join(args.model_path, 'encoder.pt')
+    
+    # What is ckpt??
     ckpt = torch.load(model_path, map_location='cpu')
     opts = ckpt['opts']
     opts['checkpoint_path'] = model_path
@@ -160,7 +162,9 @@ if __name__ == "__main__":
         # I think the encoder is the thing that does the pre-processing for the image - change eye reflection, modify smile etc.
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
-        img_rec = torch.clamp(img_rec.detach(), -1, 1)
+        
+        # Clamps all elements in input into the range [ min, max ]. Letting min_value and max_value be min and max, respectively,
+        img_rec = torch.clamp(img_rec.detach(), -1, 1) # I think img_rec stands for image reconstructed maybe?
         viz += [img_rec] # adding another thing to the list? some sort of modification to the image maybe?
         ###################################################################################################
         stylename = list(exstyles.keys())[args.style_id] # selecting the reference style image
@@ -205,6 +209,8 @@ if __name__ == "__main__":
         # z_plus_latent: instyle is in Z+ space
         # use_res: use extrinsic style path, or the style is not transferred
         # interp_weights: weight vector for style combination of two paths
+
+        # [instyle] is the intrinsic style code generated from the Pixel2Style2Pixel encoder?
         img_gen, _ = generator([instyle], exstyle, input_is_latent=False, z_plus_latent=True,
                               truncation=args.truncation, truncation_latent=0, use_res=True, interp_weights=args.weight)
         img_gen = torch.clamp(img_gen.detach(), -1, 1)
