@@ -20,3 +20,12 @@ model/stylegan/op/__pycache__/conv2d_gradfix.cpython-38.pyc
 model/stylegan/op/__pycache__/fused_act.cpython-38.pyc
 model/stylegan/op/__pycache__/upfirdn2d.cpython-38.pyc
 Paper.pdf
+output
+temp
+pics
+checkpoint/shape_predictor_68_face_landmarks.dat
+data/content/face.jpg
+model/encoder/__pycache__/align_all_parallel.cpython-38.pyc
+notebooks/copy_of_inference_playground.py
+test
+data/content/test_face.jpg
