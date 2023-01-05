@@ -23,9 +23,13 @@ Paper.pdf
 output
 temp
 pics
-checkpoint/shape_predictor_68_face_landmarks.dat
 data/content/face.jpg
 model/encoder/__pycache__/align_all_parallel.cpython-38.pyc
 notebooks/copy_of_inference_playground.py
 test
 data/content/test_face.jpg
+checkpoint/shape_predictor_68_face_landmarks.dat
+checkpoint/generator-pretrain.pt
+checkpoint/model_ir_se50.pth
+checkpoint/stylegan2-ffhq-config-f.pt
+checkpoint/cartoon/finetune-000600.pt
