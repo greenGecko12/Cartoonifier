@@ -23,6 +23,7 @@ Paper.pdf
 output
 temp
 pics
+data
 data/content/face.jpg
 model/encoder/__pycache__/align_all_parallel.cpython-38.pyc
 notebooks/copy_of_inference_playground.py
@@ -34,3 +35,6 @@ checkpoint/model_ir_se50.pth
 checkpoint/stylegan2-ffhq-config-f.pt
 checkpoint/cartoon/finetune-000600.pt
 logs
+model/stylegan/__pycache__/dataset.cpython-38.pyc
+model/stylegan/__pycache__/distributed.cpython-38.pyc
+model/stylegan/__pycache__/non_leaking.cpython-38.pyc

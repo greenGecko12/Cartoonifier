@@ -13,6 +13,8 @@
 ## A Python program requiring CUDA:
 source /etc/profile.d/modules.sh
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
+export CXX=g++
+export CUDA_HOME=/local/java/cuda-11.0
 
 ## activating the conda virtual environment
 conda activate dualstylegan_env
@@ -20,6 +22,10 @@ module load CUDA/11.6.0
 
 ## inferencing
 ## python style_transfer.py --style cartoon --style_id 10
-python -c "import torch; print(str(torch.version.cuda))"
+# python -c "import torch; print(str(torch.version.cuda))"
 
 
+# python style_transfer.py --style cartoon --style_id 180
+
+# Fine-tune StyleGAN. Fine-tune StyleGAN in distributed settings:
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 finetune_stylegan.py --iter 600 --batch 4 --ckpt ./checkpoint/stylegan2-ffhq-config-f.pt --style cartoon --augment ./data/cartoon/lmdb/

@@ -2,8 +2,9 @@ falcon.sbatch eagle.sbatch are the shell scripts that enable the GAN to run on t
 
 run this command: [export CXX=g++] before submitting a job to DCS batch compute
 export CUDA_HOME=/local/java/cuda-10.1
-export CUDA_HOME=/local/java/cuda-11.0
+export CUDA_HOME=/local/java/cuda-11.0 -- this one
 
+CHECK all available CUDA versions on the machine: [ls -ld /local/java/cud*]
 
 CUDA version: V11.6.55
 
