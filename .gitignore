@@ -34,7 +34,10 @@ checkpoint/generator-pretrain.pt
 checkpoint/model_ir_se50.pth
 checkpoint/stylegan2-ffhq-config-f.pt
 checkpoint/cartoon/finetune-000600.pt
-logs
+log
 model/stylegan/__pycache__/dataset.cpython-38.pyc
 model/stylegan/__pycache__/distributed.cpython-38.pyc
 model/stylegan/__pycache__/non_leaking.cpython-38.pyc
+logs
+new_logs
+checkpoint

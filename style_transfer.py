@@ -28,7 +28,7 @@ class TestOptions():
         self.parser.add_argument("--name", type=str, default='cartoon_transfer', help="filename to save the generated images")
         self.parser.add_argument("--preserve_color", action="store_true", help="preserve the color of the content image")
         self.parser.add_argument("--model_path", type=str, default='./checkpoint/', help="path of the saved models")
-        self.parser.add_argument("--model_name", type=str, default='generator.pt', help="name of the saved dualstylegan")
+        self.parser.add_argument("--model_name", type=str, default='generator-001500.pt', help="name of the saved dualstylegan")
         self.parser.add_argument("--output_path", type=str, default='./output/', help="path of the output images")
         self.parser.add_argument("--data_path", type=str, default='./data/', help="path of dataset")
         self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
@@ -57,6 +57,7 @@ class TestOptions():
             print('%s: %s' % (str(name), str(value)))
         return self.opt
     
+
 """
 WE ARE NOT IN THE CLASS ANYMORE - just functions!
 """
