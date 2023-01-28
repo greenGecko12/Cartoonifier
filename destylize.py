@@ -1,5 +1,16 @@
-import os
+"""
+This file basically does what is mentioned in section 3.1 of the paper: Facial Destylization 
 
+Stage 1: Latent initialization
+Stage 2: Latent optimization
+Stage 3: Image embedding
+
+In the paper, it mentions something about facial destylization -> transforming artistic portraits into realistic faces.
+This apparently provides face-portrait pairs which act as supervision during Progressive fine-tuning.
+
+Don't think this file is that important for implementing my extensions.
+"""
+import os
 import numpy as np
 import torch
 from torch import optim
@@ -10,7 +21,7 @@ from torchvision import transforms
 from torch.nn import functional as F
 import torchvision
 from PIL import Image
-from tqdm import tqdm # this module handles progress bars (mentioned in GAN tutorial)
+from tqdm import tqdm # progress bars
 import math
 
 from model.stylegan.model import Generator
@@ -20,7 +31,6 @@ from model.encoder.criteria import id_loss
 
 class TestOptions():
     def __init__(self):
-
         self.parser = argparse.ArgumentParser(description="Facial Destylization")
         self.parser.add_argument("style", type=str, help="target style type")
         self.parser.add_argument("--truncation", type=float, default=0.7, help="truncation for intrinsic style code (content)")
@@ -30,7 +40,6 @@ class TestOptions():
         self.parser.add_argument("--iter", type=int, default=300, help="total training iterations")
         self.parser.add_argument("--batch", type=int, default=1, help="batch size")
 
-
     def parse(self):
         self.opt = self.parser.parse_args()        
         args = vars(self.opt)
@@ -38,7 +47,8 @@ class TestOptions():
         for name, value in sorted(args.items()):
             print('%s: %s' % (str(name), str(value)))
         return self.opt
-    
+
+# something learning rate
 def get_lr(t, initial_lr, rampdown=0.25, rampup=0.05):
     lr_ramp = min(1, (1 - t) / rampdown)
     lr_ramp = 0.5 - 0.5 * math.cos(lr_ramp * math.pi)
@@ -46,6 +56,7 @@ def get_lr(t, initial_lr, rampdown=0.25, rampup=0.05):
 
     return initial_lr * lr_ramp
 
+# Not entirely sure what this bit actually does
 def noise_regularize(noises):
     loss = 0
 
@@ -68,6 +79,7 @@ def noise_regularize(noises):
 
     return loss
 
+# probably just a utility method or something
 def noise_normalize_(noises):
     for noise in noises:
         mean = noise.mean()
@@ -75,6 +87,7 @@ def noise_normalize_(noises):
 
         noise.data.add_(-mean).div_(std)
         
+
 if __name__ == "__main__":
     device = "cuda"
 
@@ -82,9 +95,11 @@ if __name__ == "__main__":
     args = parser.parse()
     print('*'*50)
     
+    # maing a directory to store all the destylized portraits
     if not os.path.exists("log/%s/destylization/"%(args.style)):
         os.makedirs("log/%s/destylization/"%(args.style))
         
+    # again, just composing various transformations
     transform = transforms.Compose(
         [
             transforms.Resize(256),
@@ -101,21 +116,27 @@ if __name__ == "__main__":
     generator = Generator(1024, 512, 8, 2).to(device)
     generator.eval()
 
+    # I guess this checkpoint thing loads in a dictionary with the weights of all the models etc.
     ckpt = torch.load(os.path.join(args.model_path, args.style, args.model_name))
+    # loading the weights of the fine-tuned model
     generator_prime.load_state_dict(ckpt["g_ema"])
+
+    # loading the the original StyleGAN g that was trained on FFHQ faces
     ckpt = torch.load(os.path.join(args.model_path, 'stylegan2-ffhq-config-f.pt'))
     generator.load_state_dict(ckpt["g_ema"])
-    noises_single = generator.make_noise()
 
+    # loading and instantiating various objects
+    noises_single = generator.make_noise()
     model_path = os.path.join(args.model_path, 'encoder.pt')
     ckpt = torch.load(model_path, map_location='cpu')
     opts = ckpt['opts']
     opts['checkpoint_path'] = model_path
     opts = Namespace(**opts)
     encoder = pSp(opts)
-    encoder.eval()
+    encoder.eval() # evaluation mode
     encoder.to(device)
 
+    # variables (objects) to store the losses of the models during training --> used to update the weights
     percept = lpips.PerceptualLoss(model="net-lin", net="vgg", use_gpu=device.startswith("cuda"))
     id_loss = id_loss.IDLoss(os.path.join(args.model_path, 'model_ir_se50.pth')).to(device).eval()
 
@@ -136,7 +157,7 @@ if __name__ == "__main__":
 
         with torch.no_grad():  
             # reconstructed face g(z^+_e) and extrinsic style code z^+_e
-            img_rec, latent_e = encoder(imgs, randomize_noise=False, return_latents=True, z_plus_latent=True)
+            img_rec, latent_e = encoder(imgs, randomize_noise=False, return_latents=True, z_plus_latent=True) # using pSp to embed the portrait into StyleGAN latent space
             
         for j in range(imgs.shape[0]):
             dict2[batchfiles[j]] = latent_e[j:j+1].cpu().numpy()
@@ -196,13 +217,13 @@ if __name__ == "__main__":
             )
 
         with torch.no_grad():
-            # (optinal) preserve color
+            # (optional) preserve color
             latent[:,8:18] = latent_e[:,8:18].detach()   
             # g(hat(z)^+_e)
             img_dsty, _ = generator([latent.detach()], input_is_latent=False, truncation=args.truncation, 
                            truncation_latent=0, noise=noises, z_plus_latent=True)
             img_dsty = F.adaptive_avg_pool2d(img_dsty.detach(), 256)
-            # (optinal) preserve color
+            # (optional) preserve color
             _, latent_i = encoder(img_dsty, randomize_noise=False, return_latents=True, z_plus_latent=True)
             # z^+_i
             latent_i[:,8:18] = latent_e[:,8:18].detach()   
