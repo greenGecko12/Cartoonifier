@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision
 
-# VGG architecter, used for the perceptual loss using a pretrained VGG network
+# VGG architecture, used for the perceptual loss using a pretrained VGG network
 class VGG19(torch.nn.Module):
     def __init__(self, requires_grad=False):
         super().__init__()

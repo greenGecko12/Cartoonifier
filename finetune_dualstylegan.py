@@ -1,3 +1,12 @@
+""" 
+This file is very similar to finetune_stylegan.py
+
+This file corresponds to section 3.3 in the paper.
+
+A progressive fine-tuning scheme to smoothly transform the generative space of DualStyleGAN towards the target domain.
+
+In DualStyleGAN, the discriminator is the same as StyleGAN
+"""
 import argparse
 from argparse import Namespace
 import math
@@ -16,7 +25,7 @@ from PIL import Image
 from util import data_sampler, requires_grad, accumulate, sample_data, d_logistic_loss, d_r1_loss, g_nonsaturating_loss, g_path_regularize, make_noise, mixing_noise, set_grad_none
 
 from model.dualstylegan import DualStyleGAN
-from model.stylegan.model import Discriminator
+from model.stylegan.model import Discriminator # In DualStyleGAN, the discriminator is the same as StyleGAN
 from model.encoder.psp import pSp
 from model.encoder.criteria import id_loss
 from model.vgg import VGG19
@@ -24,7 +33,6 @@ import model.contextual_loss.functional as FCX
 
 try:
     import wandb
-
 except ImportError:
     wandb = None
 
@@ -43,7 +51,6 @@ from model.stylegan.model import Generator, Discriminator
 
 class TrainOptions():
     def __init__(self):
-
         self.parser = argparse.ArgumentParser(description="Fine-tune DualStyleGAN")
         self.parser.add_argument("style", type=str, help="style type")
         self.parser.add_argument("--iter", type=int, default=1000, help="total training iterations")
@@ -84,6 +91,7 @@ class TrainOptions():
         self.parser.add_argument("--instyle_path", type=str, default=None, help="path to the intrinsic style codes")
         self.parser.add_argument("--model_name", type=str, default='generator', help="name of saved model")
 
+    # parsing the command line arguments
     def parse(self):
         self.opt = self.parser.parse_args()
         if self.opt.encoder_path is None:
@@ -107,7 +115,10 @@ class TrainOptions():
                 print('%s: %s' % (str(name), str(value)))
         return self.opt                
 
-
+# TODO: investigate what this function does
+""" 
+I think Simgs means supervision images --> the face-portrait pairs
+"""
 def get_paired_data(instyles, Simgs, exstyles, subspace_std=0.1, batch_size=4, random_ind=8):
     ind = np.random.randint(0, instyles.size(0), size=batch_size)
     Simg = Simgs[ind]
@@ -121,21 +132,25 @@ def get_paired_data(instyles, Simgs, exstyles, subspace_std=0.1, batch_size=4, r
 
 
 def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, instyles, Simgs, exstyles, vggloss, id_loss, device):
-    loader = sample_data(loader)
+    loader = sample_data(loader) # loader, return one batch at a time
     vgg_weights = [0.0, 0.5, 1.0, 0.0, 0.0]
     pbar = range(args.iter)
 
+    # i.e. if the system is not distributed (the machine this code has run on is NOT distributed so it will return 0)
     if get_rank() == 0:
         pbar = tqdm(pbar, initial=args.start_iter, smoothing=0.01, ncols=180, dynamic_ncols=False)
 
     mean_path_length = 0
 
+    # variables to store all the losses
     d_loss_val = 0
     r1_loss = torch.tensor(0.0, device=device)
     g_loss_val = 0
     path_loss = torch.tensor(0.0, device=device)
     path_lengths = torch.tensor(0.0, device=device)
     mean_path_length_avg = 0
+
+    # dictionary to store all the losses
     loss_dict = {}
 
     if args.distributed:
@@ -150,6 +165,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
     ada_aug_p = args.augment_p if args.augment_p > 0 else 0.0
     r_t_stat = 0
 
+    # TODO: investigate what the AdaptiveAugment class does
     if args.augment and args.augment_p == 0:
         ada_augment = AdaptiveAugment(args.ada_target, args.ada_length, 8, device)
 
@@ -159,7 +175,6 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
     
     for idx in pbar:
         i = idx + args.start_iter
-        
         which = i % args.subspace_freq # defines whether we use paired data
 
         if i > args.iter:
@@ -170,9 +185,14 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
         real_img = next(loader)
         real_img = real_img.to(device)
 
+        """
+        Training the discriminator. Keeping the generator constant
+        """
         requires_grad(generator, False)
         requires_grad(discriminator, True)
 
+        # TODO: investigate this chunk of code a bit more
+        ####################################################################################################################
         if which == 0:
             # sample z^+_e, z for Lsty, Lcon and Ladv
             exstyle, _, _ = get_paired_data(instyles, Simgs, exstyles, batch_size=args.batch, random_ind=8)
@@ -186,16 +206,18 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
             instyle = [instyle.to(device)]
             real_img = real_img.to(device)
             z_plus_latent = True
-            
+        ####################################################################################################################
+
         fake_img, _ = generator(instyle, exstyle, use_res=True, z_plus_latent=z_plus_latent)
 
+        # TODO: look into the augment function
         if args.augment:
             real_img_aug, _ = augment(real_img, ada_aug_p)
             fake_img, _ = augment(fake_img, ada_aug_p)
-
         else:
             real_img_aug = real_img
 
+        # getting the outputs from the discriminator and calculating the losses from its outputs
         fake_pred = discriminator(fake_img)
         real_pred = discriminator(real_img_aug)
         d_loss = d_logistic_loss(real_pred, fake_pred)
@@ -204,6 +226,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
         loss_dict["real_score"] = real_pred.mean()
         loss_dict["fake_score"] = fake_pred.mean()
 
+        # improving the discriminator - i.e. calculating the gradients and updating the weights
         discriminator.zero_grad()
         d_loss.backward()
         d_optim.step()
@@ -214,12 +237,12 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
 
         d_regularize = i % args.d_reg_every == 0
 
+        # TODO: what is d_regularize? 
         if d_regularize:
             real_img.requires_grad = True
 
             if args.augment:
-                real_img_aug, _ = augment(real_img, ada_aug_p)
-
+                real_img_aug, _ = augment(real_img, ada_aug_p) # TODO: investigate what the augment function does
             else:
                 real_img_aug = real_img
 
@@ -231,8 +254,12 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
 
             d_optim.step()
 
-        loss_dict["r1"] = r1_loss
+        loss_dict["r1"] = r1_loss # TODO: what is the r1_loss
 
+
+        """
+        Training the generator. Keeping the discriminator constant
+        """
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
@@ -252,7 +279,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
             z_plus_latent = True
             
         fake_img, _ = generator(instyle, exstyle, use_res=True, z_plus_latent=z_plus_latent)
-        
+
+        # TODO: not exactly sure what's going on from here onwards - training the generator maybe
         with torch.no_grad():  
             real_img_256 = F.adaptive_avg_pool2d(real_img, 256).detach()
             real_feats = vggloss(real_img_256)
@@ -293,6 +321,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
         loss_dict["sty"] = sty_loss # Lsty
         g_loss = g_loss + gr_loss + sty_loss + l2_reg_loss + ID_loss
 
+        # updating the generator's weights
         generator.zero_grad()
         g_loss.backward()
         g_optim.step()
@@ -333,6 +362,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
 
         loss_reduced = reduce_loss_dict(loss_dict)
 
+        # storing all the loss values in a dictionary
         d_loss_val = loss_reduced["d"].mean().item()
         g_loss_val = loss_reduced["g"].mean().item()
         gr_loss_val = loss_reduced["gr"].mean().item()
@@ -354,6 +384,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
                 )
             )
 
+            # logging the "results" every 100 iterations or something
             if i % 100 == 0 or (i+1) == args.iter:
                 with torch.no_grad():
                     g_ema.eval()
@@ -367,6 +398,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
                         range=(-1, 1),
                     )
 
+            # saving the model weights
             if ((i+1) >= args.save_begin and (i+1) % args.save_every == 0) or (i+1) == args.iter:
                 torch.save(
                     {
@@ -381,7 +413,6 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, insty
                     f"%s/%s/%s-%06d.pt"%(args.model_path, args.style, args.model_name, i+1),
                 )
 
-                
 
 
 if __name__ == "__main__":
@@ -391,15 +422,18 @@ if __name__ == "__main__":
     args = parser.parse()
     if args.local_rank == 0:
         print('*'*98)
-        
+
+    # making the directories if they don't exist   
     if not os.path.exists("log/%s/"%(args.style)):
         os.makedirs("log/%s/"%(args.style))
     if not os.path.exists("%s/%s/"%(args.model_path, args.style)):
         os.makedirs("%s/%s/"%(args.model_path, args.style))    
         
+    # this is for distributed training, not too relevant for us
     n_gpu = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.distributed = n_gpu > 1
 
+    # distributed training, again, not relevant for training on batch compute
     if args.distributed:
         torch.cuda.set_device(args.local_rank)
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
@@ -408,21 +442,25 @@ if __name__ == "__main__":
     args.latent = 512
     args.n_mlp = 8
 
-    #args.start_iter = 0
-
+    # instantiating the generator and the discriminator
     generator = DualStyleGAN(args.size, args.latent, args.n_mlp, 
                              channel_multiplier=args.channel_multiplier).to(device)
     discriminator = Discriminator(
         args.size, channel_multiplier=args.channel_multiplier
     ).to(device)
+
+    # TODO: g_ema is a copy of the generator, what is the reason for this?
+    # ema: exponential moving average?? 
     g_ema = DualStyleGAN(args.size, args.latent, args.n_mlp, 
                          channel_multiplier=args.channel_multiplier).to(device)
-    g_ema.eval()
-    accumulate(g_ema, generator, 0)
+    g_ema.eval() # evaluation mode basically - turning off things like dropout and batch normalisatin
+    accumulate(g_ema, generator, 0) # TODO: what does this do?
 
+    # regularization ratios, whatever they are
     g_reg_ratio = args.g_reg_every / (args.g_reg_every + 1)
     d_reg_ratio = args.d_reg_every / (args.d_reg_every + 1)
 
+    # Optimisers for both generator and discriminator
     g_optim = optim.Adam(
         list(generator.res.parameters()) + list(generator.style.parameters()),
         lr=args.lr * g_reg_ratio,
@@ -436,16 +474,8 @@ if __name__ == "__main__":
 
     if args.ckpt is not None:
         print("load model:", args.ckpt)
-
+        # I think the ckpt (checkpoint) is a big dictionary containing all the model weights
         ckpt = torch.load(args.ckpt, map_location=lambda storage, loc: storage)
-
-        #try:
-        #    ckpt_name = os.path.basename(args.ckpt)
-        #    args.start_iter = int(os.path.splitext(ckpt_name)[0])
-
-        #except ValueError:
-        #    pass
-
         generator.load_state_dict(ckpt["g"])
         #generator.generator.load_state_dict(ckpt["g_ema"])
         discriminator.load_state_dict(ckpt["d"])
@@ -457,6 +487,7 @@ if __name__ == "__main__":
         if "d_optim" in ckpt:
             d_optim.load_state_dict(ckpt["d_optim"])
 
+    # distributed training, not too relevant at the momement
     if args.distributed:
         generator = nn.parallel.DistributedDataParallel(
             generator,
@@ -472,6 +503,7 @@ if __name__ == "__main__":
             broadcast_buffers=False,
         )
 
+    # transforms for the images in the dataset presumably
     transform = transforms.Compose(
         [
             transforms.RandomHorizontalFlip(),
@@ -497,13 +529,15 @@ if __name__ == "__main__":
     if get_rank() == 0 and wandb is not None and args.wandb:
         wandb.init(project="dualstylegan")
     
-    ckpt = torch.load(args.encoder_path, map_location='cpu')
+    ckpt = torch.load(args.encoder_path, map_location='cpu') # encoder.pt
     opts = ckpt['opts']
     opts['checkpoint_path'] = args.encoder_path
     if 'learn_in_w' not in opts:
         opts['learn_in_w'] = True
     if 'output_size' not in opts:
         opts['output_size'] = 1024
+
+    # Loading the encoder model
     opts = Namespace(**opts)
     encoder = pSp(opts).to(device).eval()
     encoder.latent_avg = encoder.latent_avg.to(device)

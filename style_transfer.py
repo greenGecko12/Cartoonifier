@@ -28,7 +28,7 @@ class TestOptions():
         self.parser.add_argument("--name", type=str, default='cartoon_transfer', help="filename to save the generated images")
         self.parser.add_argument("--preserve_color", action="store_true", help="preserve the color of the content image")
         self.parser.add_argument("--model_path", type=str, default='./checkpoint/', help="path of the saved models")
-        self.parser.add_argument("--model_name", type=str, default='generator-001500.pt', help="name of the saved dualstylegan")
+        self.parser.add_argument("--model_name", type=str, default='generator.pt', help="name of the saved dualstylegan")
         self.parser.add_argument("--output_path", type=str, default='./output/', help="path of the output images")
         self.parser.add_argument("--data_path", type=str, default='./data/', help="path of dataset")
         self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
@@ -96,7 +96,8 @@ def load_image_grey(filename):
     ])
     img = Image.open(filename).convert('L')
     img = transform(img) # actually applying all the transformations
-    return img.unsqueeze(dim=0) 
+    return img
+    #return img.unsqueeze(dim=0) 
 
 # entry point to the code
 if __name__ == "__main__":
@@ -127,13 +128,12 @@ if __name__ == "__main__":
     ###########################################################################################
     model_path = os.path.join(args.model_path, 'encoder.pt')
     
-    # What is ckpt??
-    ckpt = torch.load(model_path, map_location='cpu')
+    ckpt = torch.load(model_path, map_location='cpu') # checkpoint
     opts = ckpt['opts']
     opts['checkpoint_path'] = model_path
     opts = Namespace(**opts) # passing in keyword arguments
     opts.device = device
-    encoder = pSp(opts) # TODO: what is pSp? (Pixel2style2pixel) I think pSp is the thing that generates the middle image in the 3 image grid
+    encoder = pSp(opts) # TODO: what is pSp? (Pixel2style2pixel) I think pSp is the thing that generates the intermediate image
     encoder.eval()
     encoder.to(device)
     ##############################################################################################
@@ -141,16 +141,18 @@ if __name__ == "__main__":
     # some sort of numpy array -> something about an extrinsic style?
     exstyles = np.load(os.path.join(args.model_path, args.style, args.exstyle_name), allow_pickle='TRUE').item()
     # these are all the reference style images in the form of a numpy dictionary
-    print(exstyles['Cartoons_00440_04.jpg'].shape) # each one of these image is of shape (1, 18, 512)
+    #print(exstyles['Cartoons_00440_04.jpg'].shape) # each one of these image is of shape (1, 18, 512)
 
+    print(exstyles.keys())
     print('Loaded models successfully!')
+    print(exstyles.keys())
     ###########################################################################################
 
     # disable gradient calculation
     with torch.no_grad():
         viz = []
         # load content image
-        if args.align_face: # this is False by default TODO: investigation what this does exactly
+        if args.align_face: # this is False by default TODO: investigate what this does exactly
             I = transform(run_alignment(args)).unsqueeze(dim=0).to(device)
             I = F.adaptive_avg_pool2d(I, 1024)
         else:
@@ -164,13 +166,15 @@ if __name__ == "__main__":
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
         
+        print(instyle.shape) # the latent code that approximates the input headshot
+        print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
         # Clamps all elements in input into the range [ min, max ]. Letting min_value and max_value be min and max, respectively,
         img_rec = torch.clamp(img_rec.detach(), -1, 1) # I think img_rec stands for image reconstructed maybe?
         viz += [img_rec] # adding another thing to the list? some sort of modification to the image maybe?
         ###################################################################################################
         stylename = list(exstyles.keys())[args.style_id] # selecting the reference style image
+        #print(stylename)
         # print(exstyles.keys())
-        # print()
         # print(stylename)
 
         # Instead of exstyles[stylename], provide your own image by using OpenCV or PIL, and then converting into the the same shape as 
@@ -178,15 +182,19 @@ if __name__ == "__main__":
         #(1, 18, 512) shape of tensor
        
         # PIL image
-        ###x = load_image_grey('../pics/test2.png')
-        #print(x.shape)
+        # latent = load_image_grey('./data/cartoon/images/Vanellope.jpeg').to(device);
+        # print(latent.shape)
         ###x = x.reshape((1,18,512))
         # print(x.shape)
         # x = x.crop((left, top, right, bottom))
 
         latent = torch.tensor(exstyles[stylename]).to(device) # provide any other type of image
+        latent1 = torch.tensor(exstyles["Cartoons_00251_01.jpg"]).to(device)
+
+        latent_avg = np.average([latent, latent1], axis=0)
+        print(latent_avg.shape)
         # print(exstyles[stylename].shape)
-        ###latent = torch.tensor(x).to(device) # provide any other type of image
+        # latent = torch.tensor(x).to(device) # provide any other type of image
         
         #print(latent.shape)
         # read as grayscale
@@ -197,13 +205,18 @@ if __name__ == "__main__":
         if args.preserve_color: #TODO: investigate - what is preserve_color?
             latent[:,7:18] = instyle[:,7:18]
         # extrinsic style code
+        # TODO: what exactly is the line below doing in terms of reshaping the vector
         exstyle = generator.generator.style(latent.reshape(latent.shape[0]*latent.shape[1], latent.shape[2])).reshape(latent.shape)
 
+        # exstyle : 1, 18, 512
+
         # load style image if it exists (and add it to the list)
-        S = None
-        if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
-            S = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
-            viz += [S]
+        # S = None
+        # if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
+        #     S = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
+        #     viz += [S]
+
+        vis += [load_image(os.path.join(args.data_path, args.style, "images/Vanellope.jpeg")).to(device)]
 
         # style transfer - WHERE the image is generated
         # input_is_latent: instyle is not in W space

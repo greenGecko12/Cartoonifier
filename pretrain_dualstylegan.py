@@ -1,3 +1,9 @@
+"""
+What does this file do exactly?
+
+Pre-training the model on FFHQ faces.
+"""
+
 import argparse
 from argparse import Namespace
 import math
@@ -21,7 +27,6 @@ from model.vgg import VGG19
 
 try:
     import wandb
-
 except ImportError:
     wandb = None
 
@@ -70,6 +75,7 @@ class TrainOptions():
 
 
     def parse(self):
+        # parsing the command-line arguments passed in
         self.opt = self.parser.parse_args()
         if self.opt.encoder_path is None:
             self.opt.encoder_path = os.path.join(self.opt.model_path, 'encoder.pt')
@@ -83,16 +89,18 @@ class TrainOptions():
         return self.opt
 
 
+# TODO: investigate the difference between the pretrain and finetune
 def pretrain(args, loader, generator, discriminator, g_optim, d_optim, g_ema, encoder, vggloss, device, inject_index=5, savemodel=True):
     loader = sample_data(loader)
     vgg_weights = [0.5, 0.5, 0.5, 0.0, 0.0]
     pbar = range(args.iter)
 
-    if get_rank() == 0:
+    if get_rank() == 0: # get_rank has something to do with distributed computing
         pbar = tqdm(pbar, initial=args.start_iter, ncols=140, dynamic_ncols=False, smoothing=0.01)
 
     mean_path_length = 0
 
+    # variables to store all the losses
     d_loss_val = 0
     r1_loss = torch.tensor(0.0, device=device)
     g_loss_val = 0
@@ -101,10 +109,10 @@ def pretrain(args, loader, generator, discriminator, g_optim, d_optim, g_ema, en
     mean_path_length_avg = 0
     loss_dict = {}
 
+    # for distributed computing
     if args.distributed:
         g_module = generator.module
         d_module = discriminator.module
-
     else:
         g_module = generator
         d_module = discriminator
@@ -116,7 +124,10 @@ def pretrain(args, loader, generator, discriminator, g_optim, d_optim, g_ema, en
     if args.augment and args.augment_p == 0:
         ada_augment = AdaptiveAugment(args.ada_target, args.ada_length, 8, device)
 
+    # random noise vectors
     sample_zs = mixing_noise(args.n_sample, args.latent, 1.0, device)
+
+    # TODO: investigate what this bit below does
     with torch.no_grad():
         source_img, _ = generator([sample_zs[0]], None, input_is_latent=False, z_plus_latent=False, use_res=False)
         source_img = source_img.detach()
@@ -147,8 +158,7 @@ def pretrain(args, loader, generator, discriminator, g_optim, d_optim, g_ema, en
                 range=(-1, 1))        
         
     for idx in pbar:
-        i = idx + args.start_iter
-        
+        i = idx + args.start_iter       
         which = i % args.subspace_freq 
 
         if i > args.iter:
@@ -469,6 +479,7 @@ if __name__ == "__main__":
 
     print('Models successfully loaded!')
     
+    # TODO: investigate why pretrain() is being called 3 times
     full_iter = args.iter
     args.iter = full_iter // 10
     pretrain(args, loader, generator, discriminator, g_optim, d_optim, g_ema, encoder, vggloss, device, inject_index=7, savemodel=False)

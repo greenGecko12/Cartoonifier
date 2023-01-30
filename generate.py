@@ -8,7 +8,6 @@ from model.sampler.icp import ICPTrainer
 
 class TestOptions():
     def __init__(self):
-
         self.parser = argparse.ArgumentParser(description="Random Artistic Portrait Generation")
         self.parser.add_argument("--batch", type=int, default=8, help="number of generated images")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
