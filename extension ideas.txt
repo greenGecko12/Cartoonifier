@@ -4,3 +4,22 @@
 Requires re-training the model to add these features
 
 One file: 'instyle_code.npy' is not available on the links they shared -> hopefully this isn't too important
+
+
+add in argument parser to add to second image
+specify weights
+
+
+train on more generic data - on own dataset - actual human beings
+
+collect more data - anime characters
+
+one model for everything --> 
+
+reference style images could be another person
+
+make images look funnier
+
+facial warping
+
+different styles on different sides of the faces

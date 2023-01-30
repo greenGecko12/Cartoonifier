@@ -29,7 +29,7 @@ class TestOptions():
         self.parser.add_argument("--preserve_color", action="store_true", help="preserve the color of the content image")
         self.parser.add_argument("--model_path", type=str, default='./checkpoint/', help="path of the saved models")
         self.parser.add_argument("--model_name", type=str, default='generator.pt', help="name of the saved dualstylegan")
-        self.parser.add_argument("--output_path", type=str, default='./output/', help="path of the output images")
+        self.parser.add_argument("--output_path", type=str, default='./output2/', help="path of the output images")
         self.parser.add_argument("--data_path", type=str, default='./data/', help="path of dataset")
         self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
         self.parser.add_argument("--exstyle_name", type=str, default=None, help="name of the extrinsic style codes")
@@ -143,9 +143,9 @@ if __name__ == "__main__":
     # these are all the reference style images in the form of a numpy dictionary
     #print(exstyles['Cartoons_00440_04.jpg'].shape) # each one of these image is of shape (1, 18, 512)
 
-    print(exstyles.keys())
+    # print(exstyles.keys())
     print('Loaded models successfully!')
-    print(exstyles.keys())
+    # print(exstyles.keys())
     ###########################################################################################
 
     # disable gradient calculation
@@ -166,8 +166,8 @@ if __name__ == "__main__":
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
         
-        print(instyle.shape) # the latent code that approximates the input headshot
-        print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
+        # print(instyle.shape) # the latent code that approximates the input headshot
+        # print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
         # Clamps all elements in input into the range [ min, max ]. Letting min_value and max_value be min and max, respectively,
         img_rec = torch.clamp(img_rec.detach(), -1, 1) # I think img_rec stands for image reconstructed maybe?
         viz += [img_rec] # adding another thing to the list? some sort of modification to the image maybe?
@@ -184,15 +184,24 @@ if __name__ == "__main__":
         # PIL image
         # latent = load_image_grey('./data/cartoon/images/Vanellope.jpeg').to(device);
         # print(latent.shape)
-        ###x = x.reshape((1,18,512))
         # print(x.shape)
         # x = x.crop((left, top, right, bottom))
 
-        latent = torch.tensor(exstyles[stylename]).to(device) # provide any other type of image
-        latent1 = torch.tensor(exstyles["Cartoons_00251_01.jpg"]).to(device)
+        
 
-        latent_avg = np.average([latent, latent1], axis=0)
-        print(latent_avg.shape)
+        latent = load_image_grey("/home/sai_k/DualStyleGAN/data/cartoon/images/train/Vanellope.jpeg").to(device) # provide any other type of image
+        latent = latent.reshape((1,18,512))
+        # latent1 = torch.tensor(exstyles["Cartoons_00189_01.jpg"]).to(device)
+
+        # latent_avg = np.average([latent, latent1], axis=0)
+        # latent_avg = torch.mean([latent, latent1], axis=0)
+
+        # latent = latent.add(latent1) # addition of two tensors
+        # avg = torch.mean(pt_addition_result_ex) # mean of output tensors
+
+        # latent = latent /2;
+
+        # print(latent.size())
         # print(exstyles[stylename].shape)
         # latent = torch.tensor(x).to(device) # provide any other type of image
         
@@ -205,6 +214,7 @@ if __name__ == "__main__":
         if args.preserve_color: #TODO: investigate - what is preserve_color?
             latent[:,7:18] = instyle[:,7:18]
         # extrinsic style code
+        print(latent.size())
         # TODO: what exactly is the line below doing in terms of reshaping the vector
         exstyle = generator.generator.style(latent.reshape(latent.shape[0]*latent.shape[1], latent.shape[2])).reshape(latent.shape)
 
@@ -213,10 +223,20 @@ if __name__ == "__main__":
         # load style image if it exists (and add it to the list)
         # S = None
         # if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
-        #     S = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
-        #     viz += [S]
+        
+        # S1 = load_image(os.path.join(args.data_path, args.style, 'images/train', "Cartoons_00251_01.jpg")).to(device)
+        # S2 = load_image(os.path.join(args.data_path, args.style, 'images/train', "Cartoons_00189_01.jpg")).to(device)
+        # viz += [S1, S2]
 
-        vis += [load_image(os.path.join(args.data_path, args.style, "images/Vanellope.jpeg")).to(device)]
+
+        # S = None
+        # if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
+        # S = load_image(os.path.join(args.data_path, args.style, 'images/train', "Vanellope.jpg")).to(device)
+        # S = load_image("/home/sai_k/DualStyleGAN/data/cartoon/images/train/Vanellope.jpeg").reshape((1, 18, 512)).to(device)
+        # viz += [S]
+
+
+        # vis += [load_image(os.path.join(args.data_path, args.style, "images/Vanellope.jpeg")).to(device)]
 
         # style transfer - WHERE the image is generated
         # input_is_latent: instyle is not in W space
