@@ -5,21 +5,34 @@ Requires re-training the model to add these features
 
 One file: 'instyle_code.npy' is not available on the links they shared -> hopefully this isn't too important
 
-
+TODO:
 add in argument parser to add to second image
-specify weights
+allow the user to to specify the weights of each image
+Add in some code to allow the user to specify their own image (I think has to be 1024x1024)
 
+
+TODO: extension ideas 
+1) Reference style images being actual human beings -- this requires just simple retraining on a dataset
+2) (Facial Warping) Implement a way for basic modifications to the image -- change hair colour, eye size ::: will require changes to latent vector
+3) Can specify which expression you want the output character to have -- just basic expressions: happy, sad, neutral, surprised, angry
+
+Idea number 3 - can maybe do in StyleGAN latent space - remember that video about styleGAN where you just change the latent code
+
+
+TODO: need to figure out how the style is captured from the cartoon image - the extrinsic style code
+
+
+4, 8, 16, 32, 64, 128, 256, 512, 1024
+
+maybe rewatch the youtube video on how StyleGAN works
 
 train on more generic data - on own dataset - actual human beings
-
 collect more data - anime characters
-
 one model for everything --> 
-
 reference style images could be another person
-
 make images look funnier
-
 facial warping
-
 different styles on different sides of the faces
+can specify which expression you want the output character to have
+actual human faces as the reference style images
+zero-shot cartoonification ??  - don't need to provide an actual image -- Not possible because of the architecture of DualStyleGAN
