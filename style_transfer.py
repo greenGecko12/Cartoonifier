@@ -34,6 +34,7 @@ class TestOptions():
         self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
         self.parser.add_argument("--exstyle_name", type=str, default=None, help="name of the extrinsic style codes")
 
+        self.parser.add_argument("--cartoon_image", type=str, default=None, help="this is the user-provided image of a cartoon face")
         """
         What is the extrinsic style --> this is the style of the image
         """
@@ -163,6 +164,9 @@ if __name__ == "__main__":
         # reconstructed content image and its intrinsic style code
         ##################################################################################################
         # I think the encoder is the thing that does the pre-processing for the image - change eye reflection, modify smile etc.
+
+        print(F.adaptive_avg_pool2d(I, 256).shape)
+
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
         
