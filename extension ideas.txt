@@ -6,9 +6,11 @@ Requires re-training the model to add these features
 One file: 'instyle_code.npy' is not available on the links they shared -> hopefully this isn't too important
 
 TODO:
-add in argument parser to add to second image
+add in argument parser to add to second image (user-provided is done, add in the id code - i.e. user can give two ids)
 allow the user to to specify the weights of each image
 Add in some code to allow the user to specify their own image (I think has to be 1024x1024)
+
+CHECK THE GITHUB ISSUES --> THERE MIGHT BE SOME USEFUL INSIGHTS ON THAT PAGE
 
 
 TODO: extension ideas 

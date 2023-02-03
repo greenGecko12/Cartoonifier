@@ -29,6 +29,36 @@ def load_image(filename):
     img = transform(img)
     return img.unsqueeze(dim=0)   
 
+# check if we have a GPU and if so, we use that
+# otherwise is done on the CPU
+def get_default_device():
+    """Pick GPU if available, else CPU"""
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    else:
+        return torch.device('cpu')
+
+def load_cartoon_image(filename):
+    # transforming the image into 96x96 greyscale
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5],std=[0.5]),
+        transforms.Resize((96,96))
+    ])
+    img = Image.open(filename).convert('L')
+    return transform(img)
+
+def load_viz_image(filename):
+    transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5,0.5,0.5]),
+    transforms.Resize((1024,1024))
+    ])
+    
+    img = Image.open(filename)
+    img = transform(img)
+    return img.unsqueeze(dim=0) 
+
 def data_sampler(dataset, shuffle, distributed):
     if distributed:
         return data.distributed.DistributedSampler(dataset, shuffle=shuffle)

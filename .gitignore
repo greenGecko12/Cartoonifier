@@ -56,8 +56,5 @@ model/stylegan/lpips/__pycache__/dist_model.cpython-38.pyc
 model/stylegan/lpips/__pycache__/networks_basic.cpython-38.pyc
 model/stylegan/lpips/__pycache__/pretrained_networks.cpython-38.pyc
 model/contextual_loss/modules/__pycache__/__init__.cpython-38.pyc
-output2/1.jpg
-.gitignore
-.gitignore
-output2/cartoon_transfer_177_randomface_overview.jpg
-output2/2.jpg
+output2
+output3
