@@ -132,7 +132,7 @@ def make_noise(batch, latent_dim, n_noise, device):
     if n_noise == 1:
         return torch.randn(batch, latent_dim, device=device)
 
-    noises = torch.randn(n_noise, batch, latent_dim, device=device).unbind(0)
+    noises = torch.randn(n_noise, batch, latent_dim, device=device).unbind(0) # Removes a tensor dimension, in this case, the outermost dimension
 
     return noises
 

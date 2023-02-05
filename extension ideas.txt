@@ -12,11 +12,16 @@ Add in some code to allow the user to specify their own image (I think has to be
 
 CHECK THE GITHUB ISSUES --> THERE MIGHT BE SOME USEFUL INSIGHTS ON THAT PAGE
 
-
+#####################################################################################################################################################
 TODO: extension ideas 
-1) Reference style images being actual human beings -- this requires just simple retraining on a dataset
+1) Reference style images being actual human beings -- this requires just retraining on a faces dataset
 2) (Facial Warping) Implement a way for basic modifications to the image -- change hair colour, eye size ::: will require changes to latent vector
 3) Can specify which expression you want the output character to have -- just basic expressions: happy, sad, neutral, surprised, angry
+4) ZERO-SHOT CARTOONIFICATION -- where you specify the style of the images (and don't provide a reference style image)
+######################################################################################################################################################
+
+
+WHY ARE BOTH THE INTRINSIC AND EXTRINSIC STYLE CODES TENSORS OF SHAPE (1, 18, 512)
 
 Idea number 3 - can maybe do in StyleGAN latent space - remember that video about styleGAN where you just change the latent code
 
@@ -30,9 +35,9 @@ maybe rewatch the youtube video on how StyleGAN works
 
 train on more generic data - on own dataset - actual human beings
 collect more data - anime characters
-one model for everything --> 
+one model for everything --> not possible with just one model
 reference style images could be another person
-make images look funnier
+make images look funnier - 
 facial warping
 different styles on different sides of the faces
 can specify which expression you want the output character to have

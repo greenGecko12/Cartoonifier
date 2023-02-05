@@ -1,6 +1,13 @@
 """
 Fine-tuning StyleGAN, but not exactly sure what we are finetuning for?
 
+They are moving the generative space of a fully-trained StyleGAN to the domain of artistic portrait generation.
+
+In the paper, it says this:
+
+"Specifically, StyleGAN can 1be effectively fine-tuned, usually only requiring hundreds of portrait images and hours of training time, to translate its
+generative space from the face domain to the artistic portrait domain. It shows great superiority in quality, image resolution, data requirement, and efficiency compared to image style transfer and image-to-image translation models."
+
 Also: WandB is a central dashboard to keep track of your hyperparameters, system metrics, and predictions so you can compare models live
 """
 import argparse
@@ -17,12 +24,10 @@ from torchvision import transforms, utils
 from tqdm import tqdm
 from util import data_sampler, requires_grad, accumulate, sample_data, d_logistic_loss, d_r1_loss, g_nonsaturating_loss, g_path_regularize, make_noise, mixing_noise, set_grad_none
 
-
 try:
     import wandb
 except ImportError:
     wandb = None
-
 
 from model.stylegan.dataset import MultiResolutionDataset
 from model.stylegan.distributed import (
@@ -38,6 +43,7 @@ from model.stylegan.model import Generator, Discriminator # line should be self-
 class TrainOptions():
     def __init__(self):
 
+        # as the name of the class suggests, these are all parameters for training StyleGAN
         self.parser = argparse.ArgumentParser(description="Train StyleGAN")
         self.parser.add_argument("path", type=str, help="path to the lmdb dataset")
         self.parser.add_argument("--iter", type=int, default=800000, help="total training iterations")
@@ -50,7 +56,7 @@ class TrainOptions():
         self.parser.add_argument("--d_reg_every", type=int, default=16, help="interval of the applying r1 regularization")
         self.parser.add_argument("--g_reg_every", type=int, default=4, help="interval of the applying path length regularization")
         self.parser.add_argument("--mixing", type=float, default=0.9, help="probability of latent code mixing")
-        self.parser.add_argument("--ckpt", type=str, default=None, help="path to the checkpoints to resume training")
+        self.parser.add_argument("--ckpt", type=str, default=None, help="path to the checkpoints to resume training") # ckpt = checkpoint
         self.parser.add_argument("--lr", type=float, default=0.002, help="learning rate")
         self.parser.add_argument("--channel_multiplier", type=int, default=2, help="channel multiplier factor for the model. config-f = 2, else = 1")
         self.parser.add_argument("--wandb", action="store_true", help="use weights and biases logging")
@@ -80,9 +86,9 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     # data loader, provides a batch at a time - GPU memory isn't big enough to hold all the data
     loader = sample_data(loader) 
     
-    # this bit below I think is to do with the loading bar?
+    # this bit below I think is to do with the loading bar
     pbar = range(args.iter)
-    if get_rank() == 0:
+    if get_rank() == 0: # no distributed computing available
         pbar = tqdm(pbar, initial=args.start_iter, ncols=140, dynamic_ncols=False, smoothing=0.01)
 
     mean_path_length = 0
@@ -139,8 +145,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         # storing the outputs of this noise in the fake_img variable
         fake_img, _ = generator(noise)
 
-        # TODO: look into what exactly augment does
-        if args.augment:
+        if args.augment: # apply non leaking augmentation
             real_img_aug, _ = augment(real_img, ada_aug_p)
             fake_img, _ = augment(fake_img, ada_aug_p)
 
@@ -346,13 +351,7 @@ if __name__ == "__main__":
     args.latent = 512
     args.n_mlp = 8
     args.start_iter = 0
-
-    #if args.arch == 'stylegan2':
-        #from model.stylegan.model import Generator, Discriminator
-
-    #elif args.arch == 'swagan':
-        #from swagan import Generator, Discriminator
-
+    
     # defining the generator and discriminator
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier

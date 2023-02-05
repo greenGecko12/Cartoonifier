@@ -10,7 +10,7 @@ from tqdm import tqdm
 from torchvision import datasets
 from torchvision.transforms import functional as trans_fn
 
-
+# resize the image into the required size and then convert to jpeg format
 def resize_and_convert(img, size, resample, quality=100):
     img = trans_fn.resize(img, size, resample)
     img = trans_fn.center_crop(img, size)
@@ -21,6 +21,7 @@ def resize_and_convert(img, size, resample, quality=100):
     return val
 
 
+# resizes the image to sizes: 128^2, 256^2, 512^2, 1024^2
 def resize_multiple(
     img, sizes=(128, 256, 512, 1024), resample=Image.LANCZOS, quality=100
 ):
@@ -31,7 +32,7 @@ def resize_multiple(
 
     return imgs
 
-
+# converts the image to RGB, and re-sizes it, not exactly sure what "i" is
 def resize_worker(img_file, sizes, resample):
     i, file = img_file
     img = Image.open(file)
@@ -63,7 +64,7 @@ def prepare(
         with env.begin(write=True) as txn:
             txn.put("length".encode("utf-8"), str(total).encode("utf-8"))
 
-
+# this file isn't too important, it just makes an lmdb (some sort of 'lightning' database) file
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preprocess images for model training")
     parser.add_argument("--out", type=str, help="filename of the result lmdb dataset")

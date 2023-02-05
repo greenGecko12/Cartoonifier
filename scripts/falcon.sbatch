@@ -19,9 +19,10 @@ export CUDA_HOME=/local/java/cuda-11.0
 
 ## activating the conda virtual environment
 conda activate dualstylegan_env
+module load CUDA/11.6.0
 
 ## inferencing
-# python style_transfer.py --style cartoon --style_id 149
+python style_transfer.py --style cartoon --style_id 231
 
 ## Prepare data --> have already run this command
 # python ./model/stylegan/prepare_data.py --out ./data/cartoon/lmdb/ --n_worker 4 --size 1024 ./data/cartoon/images/

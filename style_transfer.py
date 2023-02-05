@@ -31,6 +31,9 @@ class TestOptions():
         # look at the help argument to see what each one means
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
 
+        # The store_true option automatically creates a default value of False.
+        # Likewise, store_false will default to True when the command-line argument is not present.
+
         # there are default parameters which are OVERWRITTEN when the user passes their own arguments
         self.parser.add_argument("--content", type=str, default='./data/content/randomface.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
@@ -42,7 +45,7 @@ class TestOptions():
         self.parser.add_argument("--preserve_color", action="store_true", help="preserve the color of the content image")
         self.parser.add_argument("--model_path", type=str, default='./checkpoint/', help="path of the saved models")
         self.parser.add_argument("--model_name", type=str, default='generator.pt', help="name of the saved dualstylegan")
-        self.parser.add_argument("--output_path", type=str, default='./output3/', help="path of the output images")
+        self.parser.add_argument("--output_path", type=str, default='./new_output/', help="path of the output images")
         self.parser.add_argument("--data_path", type=str, default='./data/', help="path of dataset")
         self.parser.add_argument("--align_face", action="store_true", help="apply face alignment to the content image")
         self.parser.add_argument("--exstyle_name", type=str, default=None, help="name of the extrinsic style codes")
@@ -162,8 +165,8 @@ if __name__ == "__main__":
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
         
-        # print(instyle.shape) # the latent code that approximates the input headshot
-        # print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
+        print(instyle.shape) # the latent code that approximates the input headshot
+        print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
         # Clamps all elements in input into the range [ min, max ]. Letting min_value and max_value be min and max, respectively,
         img_rec = torch.clamp(img_rec.detach(), -1, 1) # I think img_rec stands for image reconstructed maybe?
         viz += [img_rec]

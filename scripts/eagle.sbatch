@@ -25,7 +25,7 @@ module load CUDA/11.6.0
 ## python style_transfer.py --style cartoon --style_id 10
 # python -c "import torch; print(str(torch.version.cuda))"
 
-python style_transfer.py --style cartoon --style_id 177
+python style_transfer.py --style cartoon --style_id 45 --style_id_2 200
 
 # Fine-tune StyleGAN. Fine-tune StyleGAN in distributed settings:
 # python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 finetune_stylegan.py --iter 600 --batch 2 --ckpt ./checkpoint/stylegan2-ffhq-config-f.pt --style cartoon --augment ./data/cartoon/lmdb/
