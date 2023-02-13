@@ -14,3 +14,14 @@ new_logs
 checkpoint
 output2
 output3
+facial_editing/*.py[cod]
+facial_editing/*.jpg
+facial_editing/*.png
+facial_editing/*.jpeg
+facial_editing/*.npy
+facial_editing/log.txt
+facial_editing/results/
+facial_editing/models/pretrain/
+facial_editing/data/
+facial_editing/boundaries/
+
