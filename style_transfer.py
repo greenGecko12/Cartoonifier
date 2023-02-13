@@ -165,8 +165,8 @@ if __name__ == "__main__":
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
         
-        print(instyle.shape) # the latent code that approximates the input headshot
-        print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
+        # print(instyle.shape) # intrinsic style code
+        # print(img_rec.shape) # the intermediate face -> img_rec = image reconstructed
         # Clamps all elements in input into the range [ min, max ]. Letting min_value and max_value be min and max, respectively,
         img_rec = torch.clamp(img_rec.detach(), -1, 1) # I think img_rec stands for image reconstructed maybe?
         viz += [img_rec]

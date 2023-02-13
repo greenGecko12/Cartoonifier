@@ -1,3 +1,6 @@
+""" 
+this file isn't too important, it just makes an lmdb (some sort of 'lightning' database) file
+"""
 import argparse
 from io import BytesIO
 import multiprocessing
@@ -64,7 +67,7 @@ def prepare(
         with env.begin(write=True) as txn:
             txn.put("length".encode("utf-8"), str(total).encode("utf-8"))
 
-# this file isn't too important, it just makes an lmdb (some sort of 'lightning' database) file
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preprocess images for model training")
     parser.add_argument("--out", type=str, help="filename of the result lmdb dataset")

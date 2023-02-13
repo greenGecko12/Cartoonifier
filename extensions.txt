@@ -1,0 +1,26 @@
+1) Reference style images being actual human beings -- this requires just retraining on a faces dataset
+
+
+================================================================================================================================================
+**2) Implement a way for basic modifications to the image -- change hair colour, eye size ::: will require changes to latent vector
+https://github.com/zllrunning/face-makeup.PyTorch
+
+--maybe use this as inspiration
+
+
+3) Can specify which expression you want the output character to have -- just basic expressions: happy, sad, neutral, surprised, angry
+https://github.com/albertpumarola/GANimation
+================================================================================================================================================
+
+
+4) ZERO-SHOT CARTOONIFICATION -- where you specify the style of the images (and don't provide a reference style image)
+
+
+1, 18, 512
+
+
+
+unet is used for segmentation
+
+hair colour 
+eye size

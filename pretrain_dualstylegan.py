@@ -1,7 +1,9 @@
 """
 What does this file do exactly?
 
-Pre-training the model on FFHQ faces.
+Pre-training the model on FFHQ faces. 
+
+Note: this python file has been run because it requires the FFHQ plus the original authors provided the pre-trained model anyway.
 """
 
 import argparse
