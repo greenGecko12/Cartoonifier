@@ -1,0 +1,8 @@
+Download gradio onto the DCS systems using pip
+install sklearn using 'pip install scikit-learn'
+
+download the StyleGAN models as well. 
+
+wget https://www.dropbox.com/s/nmo2g3u0qt7x70m/stylegan_celebahq.pth?dl=1 -O models/pretrain/stylegan_celebahq.pth --quiet
+wget https://www.dropbox.com/s/qyv37eaobnow7fu/stylegan_ffhq.pth?dl=1 -O models/pretrain/stylegan_ffhq.pth --quiet
+
