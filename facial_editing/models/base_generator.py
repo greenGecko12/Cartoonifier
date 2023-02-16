@@ -1,5 +1,5 @@
 # python3.7
-"""Contains the base class for generator."""
+"""Contains the base class for a GAN generator."""
 
 import os
 import sys
@@ -41,7 +41,7 @@ def get_temp_logger(logger_name='logger'):
 
   return logger
 
-
+# basically a Python Interface
 class BaseGenerator(object):
   """Base class for generator used in GAN variants.
 
@@ -99,7 +99,7 @@ class BaseGenerator(object):
       self.logger.warning(f'No pre-trained model will be loaded!')
 
     # Change to inference mode and GPU mode if needed.
-    assert self.model
+    assert self.model # execution stops if the model isn't loaded in
     self.model.eval().to(self.run_device)
 
   def check_attr(self, attr_name):
@@ -139,7 +139,7 @@ class BaseGenerator(object):
       num: Number of latent codes to sample. Should be positive.
 
     Returns:
-      A `numpy.ndarray` as sampled latend codes.
+      A `numpy.ndarray` as sampled latent codes.
     """
     raise NotImplementedError(f'Should be implemented in derived class!')
 

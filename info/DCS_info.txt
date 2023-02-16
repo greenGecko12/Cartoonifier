@@ -1,4 +1,4 @@
-Download gradio onto the DCS systems using pip
+Download gradio onto the DCS systems using 'pip install gradio'
 install sklearn using 'pip install scikit-learn'
 
 download the StyleGAN models as well. 

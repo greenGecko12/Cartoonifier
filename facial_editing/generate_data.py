@@ -1,8 +1,8 @@
 # python3.7
-"""Generates a collection of images with specified model.
+"""Generates a collection of images with specified model.(In this case, just StyleGAN)
 
 Commonly, this file is used for data preparation. More specifically, before
-exploring the hidden semantics from the latent space, user need to prepare a
+exploring the hidden semantics from the latent space, the user needs to prepare a
 collection of images. These images can be used for further attribute prediction.
 In this way, it is able to build a relationship between input latent codes and
 the corresponding attribute scores.
