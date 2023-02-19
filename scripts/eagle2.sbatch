@@ -21,9 +21,28 @@ export CUDA_HOME=/local/java/cuda-11.0
 conda activate dualstylegan_env
 module load CUDA/11.6.0
 
+
+# LATENT_CODE_NUM=1
+# python facial_editing/edit.py \
+#     -m pggan_celebahq \
+#     -b facial_editing/boundaries/pggan_celebahq_smile_boundary.npy \
+#     -n "$LATENT_CODE_NUM" \
+#     -o facial_editing/results/pggan_celebahq_smile_editing
+
+
 LATENT_CODE_NUM=1
 python facial_editing/edit.py \
-    -m stylegan_celebahq \
-    -b facial_editing/boundaries/stylegan_celebahq_pose_boundary.npy \
-    -n "$LATENT_CODE_NUM" \
-    -o facial_editing/results/stylegan_celebahq_pose_editing
+    --model_name stylegan_celebahq \
+    --output_dir facial_editing/results/check_if_working \
+    --boundary_path facial_editing/boundaries/stylegan_celebahq_smile_boundary.npy \
+    -n "$LATENT_CODE_NUM" 
+
+# --latent_space_type wp \
+# --input_latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/stylegan_celebahq/wp.npy \
+
+# NUM=1
+# python facial_editing/generate_data.py \
+#     --model_name stylegan_celebahq  \
+#     --output_dir facial_editing/data/generating_faces \
+#     --latent_space_type wp \
+#     --num "$NUM"

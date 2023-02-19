@@ -1,5 +1,5 @@
 # python3.7
-"""Generates a collection of images with specified model.(In this case, just StyleGAN)
+"""Generates a collection of images with specified model.(In our case, just StyleGAN)
 
 Commonly, this file is used for data preparation. More specifically, before
 exploring the hidden semantics from the latent space, the user needs to prepare a
@@ -25,11 +25,14 @@ def parse_args():
   """Parses arguments."""
   parser = argparse.ArgumentParser(
       description='Generate images with given model.')
+  
   parser.add_argument('-m', '--model_name', type=str, required=True,
                       choices=list(MODEL_POOL),
                       help='Name of the model for generation. (required)')
+
   parser.add_argument('-o', '--output_dir', type=str, required=True,
                       help='Directory to save the output results. (required)')
+
   parser.add_argument('-i', '--latent_codes_path', type=str, default='',
                       help='If specified, will load latent codes from given '
                            'path instead of randomly sampling. (optional)')
@@ -37,12 +40,15 @@ def parse_args():
                       help='Number of images to generate. This field will be '
                            'ignored if `latent_codes_path` is specified. '
                            '(default: 1)')
+
   parser.add_argument('-s', '--latent_space_type', type=str, default='z',
                       choices=['z', 'Z', 'w', 'W', 'wp', 'wP', 'Wp', 'WP'],
                       help='Latent space used in Style GAN. (default: `Z`)')
+
   parser.add_argument('-S', '--generate_style', action='store_true',
                       help='If specified, will generate layer-wise style codes '
                            'in Style GAN. (default: do not generate styles)')
+
   parser.add_argument('-I', '--generate_image', action='store_false',
                       help='If specified, will skip generating images in '
                            'Style GAN. (default: generate images)')
@@ -77,7 +83,8 @@ def main():
   total_num = latent_codes.shape[0]
 
   logger.info(f'Generating {total_num} samples.')
-  results = defaultdict(list)
+  # if a key is not present in the dictionary, then an empty list is returned
+  results = defaultdict(list) 
   pbar = tqdm(total=total_num, leave=False)
   for latent_codes_batch in model.get_batch_inputs(latent_codes):
     if gan_type == 'pggan':
@@ -87,11 +94,13 @@ def main():
                                       **kwargs,
                                       generate_style=args.generate_style,
                                       generate_image=args.generate_image)
-    for key, val in outputs.items():
-      if key == 'image':
+    
+    # returns (key, value) tuple pairs in the dictionary
+    for key, val in outputs.items(): 
+      if key == 'image': # the actual images as opposed to the latent codes
         for image in val:
           save_path = os.path.join(args.output_dir, f'{pbar.n:06d}.jpg')
-          cv2.imwrite(save_path, image[:, :, ::-1])
+          cv2.imwrite(save_path, image[:, :, ::-1]) # Saves an image to a specified file
           pbar.update(1)
       else:
         results[key].append(val)

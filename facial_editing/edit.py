@@ -23,7 +23,7 @@ from models.pggan_generator import PGGANGenerator
 from models.stylegan_generator import StyleGANGenerator
 from utils.logger import setup_logger
 from utils.manipulator import linear_interpolate
-
+from utils.manipulator import project_boundary
 
 def parse_args():
     """Parses arguments."""
@@ -46,17 +46,26 @@ def parse_args():
     parser.add_argument('-s', '--latent_space_type', type=str, default='z',
                         choices=['z', 'Z', 'w', 'W', 'wp', 'wP', 'Wp', 'WP'],
                         help='Latent space used in StyleGAN. (default: `Z`)')
-    parser.add_argument('--start_distance', type=float, default=-3.0,
+    parser.add_argument('--start_distance', type=float, default=-1.0,
                         help='Start point for manipulation in latent space. '
                              '(default: -3.0)')
-    parser.add_argument('--end_distance', type=float, default=3.0,
+    parser.add_argument('--end_distance', type=float, default=1.0,
                         help='End point for manipulation in latent space. '
                              '(default: 3.0)')
     parser.add_argument('--steps', type=int, default=10,
                         help='Number of steps for image editing. (default: 10)')
 
-    return parser.parse_args()
+    # add whether the user wants to specify any conditional boundaries
+    parser.add_argument('-c1', '--conditional_boundary1_path', type=str, default='',
+                        help='path to a conditional boundary i.e. an attribute that \
+                        is not desired when manipulating the face. For example increasing \
+                        the smile of a person increases the age and the gender both of which \
+                        are not required ')
 
+    parser.add_argument('-c2', '--conditional_boundary2_path', type=str, default='', 
+                        help='path to the second conditional boundary. See above to see what \
+                        a conditional boundary is')
+    return parser.parse_args()
 
 def main():
     """Main function."""
@@ -79,9 +88,21 @@ def main():
     if not os.path.isfile(args.boundary_path):
         raise ValueError(f'Boundary `{args.boundary_path}` does not exist!')
     boundary = np.load(args.boundary_path)
-    np.save(os.path.join(args.output_dir, 'boundary.npy'), boundary)
 
-    # If latent codes aren't specified then we simply just sample then
+    cond_boundaries = []
+
+    if os.path.isfile(args.conditional_boundary1_path):
+        logger.info(f'Preparing conditional boundary 1')
+        cond_boundaries.append(np.load(args.conditional_boundary1_path))
+
+    if os.path.isfile(args.conditional_boundary2_path):
+        logger.info(f'Preparing conditional boundary 2')
+        cond_boundaries.append(np.load(args.conditional_boundary2_path))
+        
+    boundary = project_boundary(boundary, *cond_boundaries)    
+    np.save(os.path.join(args.output_dir, 'boundary.npy'), boundary) 
+
+    # If latent codes aren't specified then we simply just sample them
     logger.info(f'Preparing latent codes.')
     if os.path.isfile(args.input_latent_codes_path):
         logger.info(
@@ -92,10 +113,11 @@ def main():
         logger.info(f'Sample latent codes randomly.')
         latent_codes = model.easy_sample(args.num, **kwargs)
     np.save(os.path.join(args.output_dir, 'latent_codes.npy'), latent_codes)
-    total_num = latent_codes.shape[0]
+    total_num = latent_codes.shape[0] # the number of faces to modify
 
+    # This is where the semantic facial editing starts
     logger.info(f'Editing {total_num} samples.')
-    for sample_id in tqdm(range(total_num), leave=False):
+    for sample_id in tqdm(range(total_num), leave=False): # each sample corresponds to a face
         interpolations = linear_interpolate(latent_codes[sample_id:sample_id + 1],
                                             boundary,
                                             start_distance=args.start_distance,
@@ -106,10 +128,10 @@ def main():
             if gan_type == 'pggan':
                 outputs = model.easy_synthesize(interpolations_batch)
             elif gan_type == 'stylegan':
-                outputs = model.easy_synthesize(interpolations_batch, **kwargs)
+                # easy_synthesize does both synthesize and post-processing
+                outputs = model.easy_synthesize(interpolations_batch, **kwargs) 
             for image in outputs['image']:
-                save_path = os.path.join(args.output_dir,
-                                         f'{sample_id:03d}_{interpolation_id:03d}.jpg')
+                save_path = os.path.join(args.output_dir, f'{sample_id:03d}_{interpolation_id:03d}.jpg')
                 cv2.imwrite(save_path, image[:, :, ::-1])
                 interpolation_id += 1
         assert interpolation_id == args.steps

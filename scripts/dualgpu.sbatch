@@ -23,11 +23,45 @@ export CUDA_HOME=/local/java/cuda-11.0
 conda activate dualstylegan_env
 module load CUDA/11.6.0
 
+
+# LATENT_CODE_NUM=1
+# python facial_editing/edit.py \
+#     --model_name stylegan_celebahq \
+#     --output_dir facial_editing/results/test_just_face_smile \
+#     --boundary_path facial_editing/boundaries/stylegan_celebahq_smile_w_boundary.npy \
+#     --input_latent_codes_path facial_editing/data/test_face/wp.npy \
+#     --latent_space_type wp \
+#     --conditional_boundary1_path facial_editing/boundaries/stylegan_celebahq_gender_w_boundary.npy \
+#     --conditional_boundary2_path facial_editing/boundaries/stylegan_celebahq_age_w_boundary.npy \
+#     --start_distance 0.0 \
+#     --end_distance 2.0
+
+
+LATENT_CODE_NUM=1
+python facial_editing/edit.py \
+    --model_name stylegan_celebahq \
+    --output_dir facial_editing/results/test_just_age_3_female \
+    --boundary_path facial_editing/boundaries/stylegan_celebahq_age_w_boundary.npy \
+    --input_latent_codes_path facial_editing/data/random_face/wp.npy \
+    --latent_space_type wp \
+    --conditional_boundary1_path facial_editing/boundaries/stylegan_celebahq_smile_w_boundary.npy \
+    --start_distance -3.0 \
+    --end_distance 2.0
+    # --conditional_boundary2_path facial_editing/boundaries/stylegan_celebahq_gender_w_boundary.npy \
+
+# NUM=1
+# python facial_editing/generate_data.py \
+#     --model_name stylegan_celebahq  \
+#     --output_dir facial_editing/data/random_face \
+#     --num "$NUM"
+
+# --latent_space_type wp \
+
 ## inferencing
 ## python style_transfer.py --style cartoon --style_id 10
 # python -c "import torch; print(str(torch.version.cuda))"
 
-python style_transfer.py --style cartoon --style_id 45 --style_id_2 142
+# python style_transfer.py --style cartoon --style_id 45 --style_id_2 142
 
 # Fine-tune StyleGAN. Fine-tune StyleGAN in distributed settings:
 # python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 finetune_stylegan.py --iter 600 --batch 2 --ckpt ./checkpoint/stylegan2-ffhq-config-f.pt --style cartoon --augment ./data/cartoon/lmdb/

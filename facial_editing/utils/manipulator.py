@@ -233,12 +233,13 @@ def linear_interpolate(latent_code,
           len(boundary.shape) == 2 and
           boundary.shape[1] == latent_code.shape[-1])
 
+  # Return evenly spaced numbers over a specified interval.
   linspace = np.linspace(start_distance, end_distance, steps)
-  if len(latent_code.shape) == 2:
+  if len(latent_code.shape) == 2: # z space
     linspace = linspace - latent_code.dot(boundary.T)
     linspace = linspace.reshape(-1, 1).astype(np.float32)
     return latent_code + linspace * boundary
-  if len(latent_code.shape) == 3:
+  if len(latent_code.shape) == 3: # w+ space
     linspace = linspace.reshape(-1, 1, 1).astype(np.float32)
     return latent_code + linspace * boundary.reshape(1, 1, -1)
   raise ValueError(f'Input `latent_code` should be with shape '

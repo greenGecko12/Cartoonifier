@@ -39,7 +39,8 @@ class StyleGANGenerator(BaseGenerator):
     self.truncation_layers = model_settings.STYLEGAN_TRUNCATION_LAYERS
     self.randomize_noise = model_settings.STYLEGAN_RANDOMIZE_NOISE
     self.model_specific_vars = ['truncation.truncation']
-    super().__init__(model_name, logger)
+    # loads in all the weights of the model
+    super().__init__(model_name, logger) # ..., self.build(), self.load()
     self.num_layers = (int(np.log2(self.resolution)) - 1) * 2
     assert self.gan_type == 'stylegan'
 
@@ -47,17 +48,17 @@ class StyleGANGenerator(BaseGenerator):
     self.check_attr('w_space_dim')
     self.check_attr('fused_scale')
     self.model = StyleGANGeneratorModel(
-        resolution=self.resolution,
-        w_space_dim=self.w_space_dim,
-        fused_scale=self.fused_scale,
-        output_channels=self.output_channels,
-        truncation_psi=self.truncation_psi,
-        truncation_layers=self.truncation_layers,
-        randomize_noise=self.randomize_noise)
+      resolution=self.resolution,
+      w_space_dim=self.w_space_dim,
+      fused_scale=self.fused_scale,
+      output_channels=self.output_channels,
+      truncation_psi=self.truncation_psi,
+      truncation_layers=self.truncation_layers,
+      randomize_noise=self.randomize_noise)
 
   def load(self):
     self.logger.info(f'Loading pytorch model from `{self.model_path}`.')
-    state_dict = torch.load(self.model_path)
+    state_dict = torch.load(self.model_path) # loading the pre-trained model
     for var_name in self.model_specific_vars:
       state_dict[var_name] = self.model.state_dict()[var_name]
     self.model.load_state_dict(state_dict)
@@ -65,6 +66,7 @@ class StyleGANGenerator(BaseGenerator):
     self.lod = self.model.synthesis.lod.to(self.cpu_device).tolist()
     self.logger.info(f'  `lod` of the loaded model is {self.lod}.')
 
+  # This method is unneccessary 
   def convert_tf_model(self, test_num=10):
     import sys
     import pickle
@@ -132,7 +134,7 @@ class StyleGANGenerator(BaseGenerator):
     self.logger.info(f'Average distance is {total_distance / test_num:.6e}.')
 
   def sample(self, num, latent_space_type='Z'):
-    """Samples latent codes randomly.
+    """Samples latent codes RANDOMLY.
 
     Args:
       num: Number of latent codes to sample. Should be positive.
@@ -166,7 +168,7 @@ class StyleGANGenerator(BaseGenerator):
         Only [`Z`, `W`, `WP`] are supported. Case insensitive. (default: `Z`)
 
     Returns:
-      The preprocessed latent codes which can be used as final input for the
+      The preprocessed latent codes which can be used as FINAL input for the
         generator.
 
     Raises:
@@ -190,8 +192,7 @@ class StyleGANGenerator(BaseGenerator):
     return latent_codes.astype(np.float32)
 
   def easy_sample(self, num, latent_space_type='Z'):
-    return self.preprocess(self.sample(num, latent_space_type),
-                           latent_space_type)
+    return self.preprocess(self.sample(num, latent_space_type), latent_space_type)
 
   def synthesize(self,
                  latent_codes,
@@ -231,9 +232,9 @@ class StyleGANGenerator(BaseGenerator):
                          f'than {self.batch_size}, and `latent_space_dim` '
                          f'equal to {self.latent_space_dim}!\n'
                          f'But {latent_codes_shape} received!')
-      zs = torch.from_numpy(latent_codes).type(torch.FloatTensor)
-      zs = zs.to(self.run_device)
-      ws = self.model.mapping(zs)
+      zs = torch.from_numpy(latent_codes).type(torch.FloatTensor) # converting to tensor
+      zs = zs.to(self.run_device) # moving to GPU
+      ws = self.model.mapping(zs) 
       wps = self.model.truncation(ws)
       results['z'] = latent_codes
       results['w'] = self.get_value(ws)
@@ -271,14 +272,18 @@ class StyleGANGenerator(BaseGenerator):
     else:
       raise ValueError(f'Latent space type `{latent_space_type}` is invalid!')
 
+    # Not exactly sure what this bit does: style codes??
     if generate_style:
       for i in range(self.num_layers):
         style = self.model.synthesis.__getattr__(
             f'layer{i}').epilogue.style_mod.dense(wps[:, i, :])
         results[f'style{i:02d}'] = self.get_value(style)
 
+    # generates the images and saves it in the results dictionary which is returned
     if generate_image:
       images = self.model.synthesis(wps)
-      results['image'] = self.get_value(images)
+      
+      # converting output to numpy array
+      results['image'] = self.get_value(images) 
 
     return results
