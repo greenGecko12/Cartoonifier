@@ -10,7 +10,7 @@ import pathlib
 
 import gradio as gr
 
-from dualstylegan import Model
+from gui.dualstylegan import Model
 
 DESCRIPTION = '''# Portrait Style Transfer with <a href="https://github.com/williamyang1991/DualStyleGAN">DualStyleGAN</a>
 
@@ -105,7 +105,7 @@ def main():
                 with gr.Column():
                     with gr.Row():
                         input_image = gr.Image(label='Input Image',
-                                               type='file')
+                                               type='pil')
                     with gr.Row():
                         preprocess_button = gr.Button('Preprocess')
                 with gr.Column():

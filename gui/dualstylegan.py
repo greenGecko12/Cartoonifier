@@ -8,7 +8,7 @@ import sys
 from typing import Callable
 
 import dlib
-import huggingface_hub
+# import huggingface_hub
 import numpy as np
 import PIL.Image
 import torch
@@ -27,7 +27,7 @@ from model.encoder.align_all_parallel import align_face
 from model.dualstylegan import DualStyleGAN
 from model.encoder.psp import pSp
 
-MODEL_REPO = 'CVPR/DualStyleGAN'
+# MODEL_REPO = 'CVPR/DualStyleGAN'
 
 class Model:
     def __init__(self, device: torch.device | str):
@@ -37,13 +37,13 @@ class Model:
         self.transform = self._create_transform()
 
         self.style_types = [
-            'cartoon',
-            'caricature',
-            'anime',
-            'arcane',
-            'comic',
-            'pixar',
-            'slamdunk',
+            'cartoon'
+            # 'caricature',
+            # 'anime',
+            # 'arcane',
+            # 'comic',
+            # 'pixar',
+            # 'slamdunk',
         ]
         self.generator_dict = {
             style_type: self._load_generator(style_type)
@@ -57,7 +57,9 @@ class Model:
     @staticmethod
     def _create_dlib_landmark_model():
         url = 'http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2'
-        path = pathlib.Path('shape_predictor_68_face_landmarks.dat')
+        path = pathlib.Path('checkpoint/shape_predictor_68_face_landmarks.dat')
+        # path = 'checkpoint/shape_predictor_68_face_landmarks.dat'
+        # file = os.file.open()
         if not path.exists():
             bz2_path = 'shape_predictor_68_face_landmarks.dat.bz2'
             torch.hub.download_url_to_file(url, bz2_path)
@@ -65,8 +67,8 @@ class Model:
         return dlib.shape_predictor(path.as_posix())
 
     def _load_encoder(self) -> nn.Module:
-        ckpt_path = huggingface_hub.hf_hub_download(MODEL_REPO,
-                                                    'models/encoder.pt')
+        # ckpt_path = huggingface_hub.hf_hub_download(MODEL_REPO, 'models/encoder.pt')
+        ckpt_path = 'checkpoint/encoder.pt'
         ckpt = torch.load(ckpt_path, map_location='cpu')
         opts = ckpt['opts']
         opts['device'] = self.device.type
@@ -89,8 +91,8 @@ class Model:
 
     def _load_generator(self, style_type: str) -> nn.Module:
         model = DualStyleGAN(1024, 512, 8, 2, res_index=6)
-        ckpt_path = huggingface_hub.hf_hub_download(
-            MODEL_REPO, f'models/{style_type}/generator.pt')
+        # ckpt_path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/generator.pt')
+        ckpt_path = 'checkpoint/cartoon/generator.pt'
         ckpt = torch.load(ckpt_path, map_location='cpu')
         model.load_state_dict(ckpt['g_ema'])
         model.to(self.device)
@@ -103,8 +105,8 @@ class Model:
             filename = 'refined_exstyle_code.npy'
         else:
             filename = 'exstyle_code.npy'
-        path = huggingface_hub.hf_hub_download(
-            MODEL_REPO, f'models/{style_type}/{filename}')
+        # path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/{filename}')
+        path = 'checkpoint/cartoon/exstyle_code.npy'
         exstyles = np.load(path, allow_pickle=True).item()
         return exstyles
 
@@ -120,7 +122,7 @@ class Model:
         tensor = self.denormalize(tensor)
         return tensor.cpu().numpy().transpose(1, 2, 0)
 
-    @torch.inference_mode()
+    # @torch.inference_mode()
     def reconstruct_face(self,
                          image: np.ndarray) -> tuple[np.ndarray, torch.Tensor]:
         image = PIL.Image.fromarray(image)
@@ -135,7 +137,7 @@ class Model:
         img_rec = self.postprocess(img_rec[0])
         return img_rec, instyle
 
-    @torch.inference_mode()
+    # @torch.inference_mode()
     def generate(self, style_type: str, style_id: int, structure_weight: float,
                  color_weight: float, structure_only: bool,
                  instyle: torch.Tensor) -> np.ndarray:
