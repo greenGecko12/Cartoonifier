@@ -34,3 +34,9 @@ def greet(name):
 demo = gr.Interface(fn=greet, inputs="text", outputs="text")
 
 demo.launch()   
+==============================================================================================================================================
+
+Todo now:
+
+make the GUI 
+hook it up to the model and facial_editing python files too

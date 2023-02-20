@@ -10,7 +10,7 @@ import pathlib
 
 import gradio as gr
 
-from model.dualstylegan import Model
+from dualstylegan import Model
 
 DESCRIPTION = '''# Portrait Style Transfer with <a href="https://github.com/williamyang1991/DualStyleGAN">DualStyleGAN</a>
 
