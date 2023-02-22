@@ -10,13 +10,21 @@ import pathlib
 
 import gradio as gr
 
-from dualstylegan import Model
+# from dualstylegan import Model
 
-DESCRIPTION = '''# Portrait Style Transfer with <a href="https://github.com/williamyang1991/DualStyleGAN">DualStyleGAN</a>
-
+DESCRIPTION = '''# Convert yourself into a cartoon</a>
 <img id="overview" alt="overview" src="https://raw.githubusercontent.com/williamyang1991/DualStyleGAN/main/doc_images/overview.jpg" />
 '''
-FOOTER = '<img id="visitor-badge" alt="visitor badge" src="https://visitor-badge.glitch.me/badge?page_id=gradio-blocks.dualstylegan" />'
+
+SECTION = '''## Step 1 (Preprocess Input Image)
+
+- Please upload an image containing a near-frontal face to the **Input Image**.
+    - If there are multiple faces in the image, hit the Edit button in the upper right corner and crop the input image beforehand.
+- Hit the **Preprocess** button.
+    - The final result will be based on this **Reconstructed Face**. So, if the reconstructed image is not satisfactory, you may want to change the input image.
+'''
+
+# FOOTER = '<img id="visitor-badge" alt="visitor badge" src="https://visitor-badge.glitch.me/badge?page_id=gradio-blocks.dualstylegan" />'
 
 
 def parse_args() -> argparse.Namespace:
@@ -85,22 +93,19 @@ def set_example_weights(example: list) -> list[dict]:
         gr.Slider.update(value=example[1]),
     ]
 
+def hello(*args):
+    return 1
+
 
 def main():
     args = parse_args()
-    model = Model(device=args.device)
+    # model = Model(device=args.device)
 
     with gr.Blocks(theme=args.theme, css='style.css') as demo:
-        gr.Markdown(DESCRIPTION)
+        gr.HTML(DESCRIPTION)
 
         with gr.Box():
-            gr.Markdown('''## Step 1 (Preprocess Input Image)
-
-- Drop an image containing a near-frontal face to the **Input Image**.
-    - If there are multiple faces in the image, hit the Edit button in the upper right corner and crop the input image beforehand.
-- Hit the **Preprocess** button.
-    - The final result will be based on this **Reconstructed Face**. So, if the reconstructed image is not satisfactory, you may want to change the input image.
-''')
+            gr.HTML(SECTION)
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
@@ -132,7 +137,9 @@ def main():
 ''')
             with gr.Row():
                 with gr.Column():
-                    style_type = gr.Radio(model.style_types,
+                    style_type = gr.Radio(
+                                        #   model.style_types,
+                                        [ "cartoon" ],
                                           label='Style Type')
                     text = get_style_image_markdown_text('cartoon')
                     style_image = gr.Markdown(value=text)
@@ -191,12 +198,16 @@ def main():
                         [1.0, 0.0],
                     ])
 
-        gr.Markdown(FOOTER)
+        # gr.Markdown(FOOTER)
 
-        preprocess_button.click(fn=model.detect_and_align_face,
+        preprocess_button.click(
+                                # fn=model.detect_and_align_face,
+                                fn=hello,
                                 inputs=input_image,
                                 outputs=aligned_face)
-        aligned_face.change(fn=model.reconstruct_face,
+        aligned_face.change(
+                            # fn=model.reconstruct_face,
+                            fn=hello,
                             inputs=aligned_face,
                             outputs=[
                                 reconstructed_face,
@@ -208,7 +219,9 @@ def main():
         style_type.change(fn=update_style_image,
                           inputs=style_type,
                           outputs=style_image)
-        generate_button.click(fn=model.generate,
+        generate_button.click(
+                            # fn=model.generate,
+                            fn=hello,
                               inputs=[
                                   style_type,
                                   style_index,
@@ -218,15 +231,15 @@ def main():
                                   instyle,
                               ],
                               outputs=result)
-        example_images.click(fn=set_example_image,
-                             inputs=example_images,
-                             outputs=example_images.components)
-        example_styles.click(fn=set_example_styles,
-                             inputs=example_styles,
-                             outputs=example_styles.components)
-        example_weights.click(fn=set_example_weights,
-                              inputs=example_weights,
-                              outputs=example_weights.components)
+        # example_images.click(fn=set_example_image,
+        #                      inputs=example_images,
+        #                      outputs=example_images.components)
+        # example_styles.click(fn=set_example_styles,
+        #                      inputs=example_styles,
+        #                      outputs=example_styles.components)
+        # example_weights.click(fn=set_example_weights,
+        #                       inputs=example_weights,
+        #                       outputs=example_weights.components)
 
     demo.launch(
         enable_queue=args.enable_queue,

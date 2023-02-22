@@ -15,6 +15,8 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as T
 
+sys.path.append("..")
+
 if os.getenv('SYSTEM') == 'spaces':
     os.system("sed -i '10,17d' DualStyleGAN/model/stylegan/op/fused_act.py")
     os.system("sed -i '10,17d' DualStyleGAN/model/stylegan/op/upfirdn2d.py")
@@ -23,8 +25,8 @@ app_dir = pathlib.Path(__file__).parent
 submodule_dir = app_dir / 'DualStyleGAN'
 sys.path.insert(0, submodule_dir.as_posix())
 
-from model.encoder.align_all_parallel import align_face
 from model.dualstylegan import DualStyleGAN
+from model.encoder.align_all_parallel import align_face
 from model.encoder.psp import pSp
 
 # MODEL_REPO = 'CVPR/DualStyleGAN'
