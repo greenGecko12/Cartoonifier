@@ -1,8 +1,6 @@
 """
 This file will add the Gradio GUI to make the GAN much easier to use. 
 """
-
-#!/usr/bin/env python
 from __future__ import annotations
 
 import argparse
@@ -12,20 +10,15 @@ import gradio as gr
 
 # from dualstylegan import Model
 
-DESCRIPTION = '''# Convert yourself into a cartoon</a>
-<img id="overview" alt="overview" src="https://raw.githubusercontent.com/williamyang1991/DualStyleGAN/main/doc_images/overview.jpg" />
-'''
+DESCRIPTION = "<h1>Cartoonify your face with the power of GANs!</h1>"
 
-SECTION = '''## Step 1 (Preprocess Input Image)
 
+SECTION = '''## Step 1: Upload your image
 - Please upload an image containing a near-frontal face to the **Input Image**.
     - If there are multiple faces in the image, hit the Edit button in the upper right corner and crop the input image beforehand.
-- Hit the **Preprocess** button.
+- Click the **Preprocess** button.
     - The final result will be based on this **Reconstructed Face**. So, if the reconstructed image is not satisfactory, you may want to change the input image.
 '''
-
-# FOOTER = '<img id="visitor-badge" alt="visitor badge" src="https://visitor-badge.glitch.me/badge?page_id=gradio-blocks.dualstylegan" />'
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -43,30 +36,19 @@ def get_style_image_url(style_name: str) -> str:
     base_url = 'https://raw.githubusercontent.com/williamyang1991/DualStyleGAN/main/doc_images'
     filenames = {
         'cartoon': 'cartoon_overview.jpg',
-        'caricature': 'caricature_overview.jpg',
-        'anime': 'anime_overview.jpg',
-        'arcane': 'Reconstruction_arcane_overview.jpg',
-        'comic': 'Reconstruction_comic_overview.jpg',
-        'pixar': 'Reconstruction_pixar_overview.jpg',
-        'slamdunk': 'Reconstruction_slamdunk_overview.jpg',
     }
     return f'{base_url}/{filenames[style_name]}'
 
 
 def get_style_image_markdown_text(style_name: str) -> str:
     url = get_style_image_url(style_name)
-    return f'<img id="style-image" src="{url}" alt="style image">'
+    # url=os.path.join(pathlib.Path(__file__).parent, "cartoons.jpg")
+    return f'<img id="style-image" src="{url}" alt="cartoon style images">'
 
 
 def update_slider(choice: str) -> dict:
     max_vals = {
         'cartoon': 316,
-        'caricature': 198,
-        'anime': 173,
-        'arcane': 99,
-        'comic': 100,
-        'pixar': 121,
-        'slamdunk': 119,
     }
     return gr.Slider.update(maximum=max_vals[choice])
 
@@ -105,7 +87,7 @@ def main():
         gr.HTML(DESCRIPTION)
 
         with gr.Box():
-            gr.HTML(SECTION)
+            gr.Markdown(SECTION)
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
@@ -123,63 +105,99 @@ def main():
                                                   type='numpy')
                     instyle = gr.Variable()
 
-            with gr.Row():
-                paths = sorted(pathlib.Path('images').glob('*.jpg'))
-                example_images = gr.Dataset(components=[input_image],
-                                            samples=[[path.as_posix()]
-                                                     for path in paths])
+            # providing examples images (not necessary for us)
+            # with gr.Row(): 
+            #     paths = sorted(pathlib.Path('images').glob('*.jpg'))
+            #     example_images = gr.Dataset(components=[input_image],
+            #                                 samples=[[path.as_posix()]
+            #                                          for path in paths])
 
         with gr.Box():
-            gr.Markdown('''## Step 2 (Select Style Image)
-
-- Select **Style Type**.
-- Select **Style Image Index** from the image table below.
-''')
+            gr.Markdown('''## Step 2: Pick cartoon style
+                        - If you pick two cartoon styles then the output will have characteristics from both cartoon images.
+                            - You will also be able to select the proportion of each style that you would like the 
+                            output from the generator to have in the next step.
+                        ''')
+            
             with gr.Row():
                 with gr.Column():
-                    style_type = gr.Radio(
-                                        #   model.style_types,
-                                        [ "cartoon" ],
-                                          label='Style Type')
+                    # style_type = gr.Radio(
+                    #                     #   model.style_types,
+                    #                     [ "cartoon" ],
+                    #                       label='Style Type')
+
+                    # fetching the image with all the cartoon characters and numbers
                     text = get_style_image_markdown_text('cartoon')
                     style_image = gr.Markdown(value=text)
-                    style_index = gr.Slider(0,
-                                            316,
-                                            value=26,
-                                            step=1,
-                                            label='Style Image Index')
 
+                    style_index = gr.Slider(0,316,value=26,step=1,label='Style Image Index 1')
+                    
+                    style_index_2 = gr.Slider(0,316,value=-1,step=1,label='Style Image Index 2')
+                    gr.Markdown("Picking the second cartoon style is **OPTIONAL**. Please leave it at -1 if you don't want to select a second style. ")
+
+                    confirm_stypes = gr.Button('Confirm choices')
+
+
+
+            # We don't need any examples
+            # with gr.Row():
+            #     example_styles = gr.Dataset(
+            #         components=[style_type, style_index],
+            #         samples=[
+            #             ['cartoon', 26],
+            #             ['caricature', 65],
+            #             ['arcane', 63],
+            #             ['pixar', 80],
+            #         ])
+        with gr.Box():
+            gr.Markdown('''## Step 3: Cartoon Character Selection
+                        - In case you couldn't quite see the cartoon face(s), here is what you have selected.
+                        - Move the slider to suit your style preference.
+                            - Moving the slider to the left will make the output look more like Style 1.
+                            - A central position the default position) will incorporate the styles of both cartoon characters with equal weight.
+                            - Likewise, moving the slider to the right will make the output look more like Style 2.
+                        ''')
             with gr.Row():
-                example_styles = gr.Dataset(
-                    components=[style_type, style_index],
-                    samples=[
-                        ['cartoon', 26],
-                        ['caricature', 65],
-                        ['arcane', 63],
-                        ['pixar', 80],
-                    ])
+                with gr.Column():
+                    cartoon_style_1 = gr.Image(label='cartoon_style_1')
+                with gr.Column():
+                    cartoon_style_2 = gr.Image(label='cartoon_style_2')
+                
+            weights = gr.Slider(0, 100, 50, step=0.10, label='Specify combination')
 
         with gr.Box():
-            gr.Markdown('''## Step 3 (Generate Style Transferred Image)
+            gr.Markdown('''## Step 4: (**OPTIONAL**) Facial Modification
+                        - Change several attributes of the input face.
+                            - These will be reflected in the generated cartoon face.
+                        - On the left is the reconstructed face you saw in step 1 for your reference.
+                            - Any modifications will be applied to this face to create what's on the right.
+                        ''')
+            with gr.Row():
+                with gr.Column():
+                    original = gr.Image(label='Reconstructed Face')
+                
+                with gr.Column():
+                    age = gr.Slider(-1, 1, 0, step=0.1, label='Age')
+                    gender = gr.Slider(-1, 1, 0, step=0.1, label='Gender')
+                    pose = gr.Slider(-1, 1, 0, step=0.1, label='Pose')
+                    smile = gr.Slider(-1, 1, 0, step=0.1, label='Smile')
+                    confirm_modified_face = gr.Button("Modify my face!")
 
-- Adjust **Structure Weight** and **Color Weight**.
-    - These are weights for the style image, so the larger the value, the closer the resulting image will be to the style image.
-- Hit the **Generate** button.
-''')
+                with gr.Column():
+                    modified = gr.Image(label='Modified Image')
+
+        with gr.Box():
+            gr.Markdown('''## Step 5: Create cartoon character
+                        - Adjust **Structure Weight** and **Color Weight**.
+                            - These are weights for the style image, so the larger the value, the closer the resulting image will be to the style image.
+                        - Hit the **Generate** button.
+                        ''')
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        structure_weight = gr.Slider(0,
-                                                     1,
-                                                     value=0.6,
-                                                     step=0.1,
-                                                     label='Structure Weight')
+                        structure_weight = gr.Slider(0,1,value=0.6,step=0.1,label='Structure Weight')
                     with gr.Row():
-                        color_weight = gr.Slider(0,
-                                                 1,
-                                                 value=1,
-                                                 step=0.1,
-                                                 label='Color Weight')
+                        color_weight = gr.Slider(0,1,value=1,step=0.1,label='Color Weight')
                     with gr.Row():
                         structure_only = gr.Checkbox(label='Structure Only')
                     with gr.Row():
@@ -188,15 +206,16 @@ def main():
                 with gr.Column():
                     result = gr.Image(label='Result')
 
-            with gr.Row():
-                example_weights = gr.Dataset(
-                    components=[structure_weight, color_weight],
-                    samples=[
-                        [0.6, 1.0],
-                        [0.3, 1.0],
-                        [0.0, 1.0],
-                        [1.0, 0.0],
-                    ])
+            # we don't need any examples
+            # with gr.Row():
+            #     example_weights = gr.Dataset(
+            #         components=[structure_weight, color_weight],
+            #         samples=[
+            #             [0.6, 1.0],
+            #             [0.3, 1.0],
+            #             [0.0, 1.0],
+            #             [1.0, 0.0],
+            #         ])
 
         # gr.Markdown(FOOTER)
 
@@ -213,24 +232,28 @@ def main():
                                 reconstructed_face,
                                 instyle,
                             ])
-        style_type.change(fn=update_slider,
-                          inputs=style_type,
-                          outputs=style_index)
-        style_type.change(fn=update_style_image,
-                          inputs=style_type,
-                          outputs=style_image)
-        generate_button.click(
-                            # fn=model.generate,
-                            fn=hello,
-                              inputs=[
-                                  style_type,
-                                  style_index,
-                                  structure_weight,
-                                  color_weight,
-                                  structure_only,
-                                  instyle,
-                              ],
-                              outputs=result)
+        
+        # style_type.change(fn=update_slider,
+        #                   inputs=style_type,
+        #                   outputs=style_index)
+        
+        # style_type.change(fn=update_style_image,
+        #                   inputs=style_type,
+        #                   outputs=style_image)
+        
+        # generate_button.click(
+        #                     # fn=model.generate,
+        #                     fn=hello,
+        #                     inputs=[
+        #                         "cartoon",
+        #                         style_index,
+        #                         structure_weight,
+        #                         color_weight,
+        #                         structure_only,
+        #                         instyle,
+        #                       ],
+        #                       outputs=result)
+        
         # example_images.click(fn=set_example_image,
         #                      inputs=example_images,
         #                      outputs=example_images.components)
@@ -240,7 +263,6 @@ def main():
         # example_weights.click(fn=set_example_weights,
         #                       inputs=example_weights,
         #                       outputs=example_weights.components)
-
     demo.launch(
         enable_queue=args.enable_queue,
         server_port=args.port,
