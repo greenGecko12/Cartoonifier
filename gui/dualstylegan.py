@@ -14,6 +14,7 @@ import PIL.Image
 import torch
 import torch.nn as nn
 import torchvision.transforms as T
+# from time import sleep
 
 sys.path.append("..")
 
@@ -38,15 +39,7 @@ class Model:
         self.encoder = self._load_encoder()
         self.transform = self._create_transform()
 
-        self.style_types = [
-            'cartoon'
-            # 'caricature',
-            # 'anime',
-            # 'arcane',
-            # 'comic',
-            # 'pixar',
-            # 'slamdunk',
-        ]
+        self.style_types = ['cartoon']
         self.generator_dict = {
             style_type: self._load_generator(style_type)
             for style_type in self.style_types
@@ -59,18 +52,19 @@ class Model:
     @staticmethod
     def _create_dlib_landmark_model():
         url = 'http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2'
-        path = pathlib.Path('checkpoint/shape_predictor_68_face_landmarks.dat')
+        path = pathlib.Path('../checkpoint/shape_predictor_68_face_landmarks.dat')
         # path = 'checkpoint/shape_predictor_68_face_landmarks.dat'
         # file = os.file.open()
         if not path.exists():
-            bz2_path = 'shape_predictor_68_face_landmarks.dat.bz2'
-            torch.hub.download_url_to_file(url, bz2_path)
-            subprocess.run(f'bunzip2 -d {bz2_path}'.split())
+            # bz2_path = 'shape_predictor_68_face_landmarks.dat.bz2'
+            # torch.hub.download_url_to_file(url, bz2_path)
+            # subprocess.run(f'bunzip2 -d {bz2_path}'.split())
+            print("path not found")
         return dlib.shape_predictor(path.as_posix())
 
     def _load_encoder(self) -> nn.Module:
         # ckpt_path = huggingface_hub.hf_hub_download(MODEL_REPO, 'models/encoder.pt')
-        ckpt_path = 'checkpoint/encoder.pt'
+        ckpt_path = '../checkpoint/encoder.pt'
         ckpt = torch.load(ckpt_path, map_location='cpu')
         opts = ckpt['opts']
         opts['device'] = self.device.type
@@ -94,7 +88,7 @@ class Model:
     def _load_generator(self, style_type: str) -> nn.Module:
         model = DualStyleGAN(1024, 512, 8, 2, res_index=6)
         # ckpt_path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/generator.pt')
-        ckpt_path = 'checkpoint/cartoon/generator.pt'
+        ckpt_path = '../checkpoint/cartoon/generator.pt'
         ckpt = torch.load(ckpt_path, map_location='cpu')
         model.load_state_dict(ckpt['g_ema'])
         model.to(self.device)
@@ -103,17 +97,21 @@ class Model:
 
     @staticmethod
     def _load_exstylecode(style_type: str) -> dict[str, np.ndarray]:
-        if style_type in ['cartoon', 'caricature', 'anime']:
-            filename = 'refined_exstyle_code.npy'
-        else:
-            filename = 'exstyle_code.npy'
+        # if style_type in ['cartoon', 'caricature', 'anime']:
+        #     filename = 'refined_exstyle_code.npy'
+        # else:
+        #     filename = 'exstyle_code.npy'
         # path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/{filename}')
-        path = 'checkpoint/cartoon/exstyle_code.npy'
+        path = '../checkpoint/cartoon/exstyle_code.npy'
         exstyles = np.load(path, allow_pickle=True).item()
         return exstyles
 
     def detect_and_align_face(self, image) -> np.ndarray:
-        image = align_face(filepath=image.name, predictor=self.landmark_model)
+        # np.save("user_photo", image) # saving the image to disk
+        # path = pathlib.Path(__file__).parent.as_posix() # getting the path to where it's stored
+        # sleep(2)
+        # image = align_face(filepath=f'{path}/user_photo.npy', predictor=self.landmark_model)
+        image = align_face(filepath=image, predictor=self.landmark_model)
         return image
 
     @staticmethod
