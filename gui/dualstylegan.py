@@ -30,8 +30,6 @@ from model.dualstylegan import DualStyleGAN
 from model.encoder.align_all_parallel import align_face
 from model.encoder.psp import pSp
 
-# MODEL_REPO = 'CVPR/DualStyleGAN'
-
 class Model:
     def __init__(self, device: torch.device | str):
         self.device = torch.device(device)
@@ -102,7 +100,7 @@ class Model:
         # else:
         #     filename = 'exstyle_code.npy'
         # path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/{filename}')
-        path = '../checkpoint/cartoon/exstyle_code.npy'
+        path = '../checkpoint/cartoon/refined_exstyle_code.npy'
         exstyles = np.load(path, allow_pickle=True).item()
         return exstyles
 
@@ -135,9 +133,10 @@ class Model:
                                         resize=False)
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
         img_rec = self.postprocess(img_rec[0])
-        return img_rec, instyle
+        return img_rec, instyle, img_rec
 
     # @torch.inference_mode()
+    # Copy the modified code that accepts two cartoon styles
     def generate(self, style_type: str, style_id: int, structure_weight: float,
                  color_weight: float, structure_only: bool,
                  instyle: torch.Tensor) -> np.ndarray:

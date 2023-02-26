@@ -3,13 +3,13 @@ This file will add the Gradio GUI to make the GAN much easier to use.
 """
 from __future__ import annotations
 
-import argparse
-import pathlib
-
 import gradio as gr
+import numpy as np
+from PIL import Image
 
 # importing the Generator (a brief version of style_transfer.py)
 from dualstylegan import Model
+from face_modify import FaceModifier
 
 # import the main() function from the edit.py file in the facial_editing directory
 DESCRIPTION = '<h1>Cartoonify your face with the power of GANs!</h1>'
@@ -26,14 +26,36 @@ def get_style_image_markdown_text():
     url = 'https://raw.githubusercontent.com/williamyang1991/DualStyleGAN/main/doc_images/cartoon_overview.jpg'
     return f'<img id="style-image" src="{url}" alt="cartoon style images">'
 
+def show_styles(style_index_1, style_index_2): 
+        exstyles = Model._load_exstylecode("")
+        stylenames = list(exstyles.keys())
+
+        stylename_1 = stylenames[style_index_1]
+        image_1 = Image.open(f'../data/cartoon/images/train/{stylename_1}')
+        image_2 = np.empty((1024, 1024, 3))
+
+        if style_index_2 != -1:
+            stylename_2 = stylenames[style_index_2]
+            image_2 = Image.open(f'../data/cartoon/images/train/{stylename_2}')
+        
+        return image_1, image_2
+
+# latent code is currenly not set in the constructor
+# use set_latent_code() defined in the FaceModifier class
+modifier = FaceModifier()
+
+def modify_face(latent_code, age, gender, pose, smile):
+    # first set the latent code
+    modifier.set_latent_code(latent_code)
+
+    face, modified_code = modifier.modify(age, gender, pose, smile)
+    return face, modified_code
+
 
 def main():
     device="cpu"
-    model = Model(device=device) # change to GPU later if required
-
-    def show_styles():
-        style_index_1.value
-        style_index_2.value
+    # change to GPU later if required
+    model = Model(device=device) 
 
     with gr.Blocks(css='style.css') as demo:
         gr.HTML(DESCRIPTION)
@@ -67,7 +89,7 @@ def main():
                 with gr.Column():
                     # fetching the image with all the cartoon characters and numbers
                     text = get_style_image_markdown_text()
-                    style_image = gr.Markdown(value=text)
+                    gr.Markdown(value=text)
 
                     style_index_1 = gr.Slider(0,316,value=26,step=1,label='Style Image Index 1', interactive=True)
                     style_index_2 = gr.Slider(-1,316,value=-1,step=1,label='Style Image Index 2', interactive=True)
@@ -93,7 +115,7 @@ def main():
                                                 interactive=False)
                     
             gr.HTML('''<p></p><p></p>''')
-            weights = gr.Slider(0, 100, 50, step=0.10, label='Specify combination', interactive=True, show_label=False)
+            weights = gr.Slider(0, 100, 50, step=10, label='Specify combination', interactive=True)
 
         with gr.Box():
             gr.Markdown('''## Step 4: (**OPTIONAL**) Facial Modification
@@ -108,14 +130,14 @@ def main():
                 
                 with gr.Column():
                     age = gr.Slider(-1, 1, 0, step=0.1, label='Age')
-                    # gender = gr.Slider(-1, 1, 0, step=0.1, label='Gender')
+                    gender = gr.Slider(-1, 1, 0, step=0.1, label='Gender')
                     pose = gr.Slider(-1, 1, 0, step=0.1, label='Pose')
                     smile = gr.Slider(-1, 1, 0, step=0.1, label='Smile')
                     confirm_modified_face = gr.Button("Modify my face!")
 
                 with gr.Column():
                     modified = gr.Image(label='Modified Image', type='numpy', interactive=False)
-
+                    instyle_modified = gr.Variable()
         with gr.Box():
             gr.Markdown('''## Step 5: Create cartoon character
                         - Adjust **Structure Weight** and **Color Weight**.
@@ -146,9 +168,24 @@ def main():
                             outputs=[
                                 reconstructed_face,
                                 instyle,
+                                original
                             ])
         
-        confirm_styles.click()
+        confirm_styles.click(fn=show_styles,
+                            inputs=[style_index_1,style_index_2], 
+                            outputs=[cartoon_style_1, cartoon_style_2])
+        
+        confirm_modified_face.click(fn=modify_face, 
+                                    inputs=[
+                                        instyle, 
+                                        age, 
+                                        gender, 
+                                        pose, 
+                                        smile
+                                    ], 
+                                    outputs=[modified, instyle_modified])
+
+
         # generate_button.click(
         #                     # fn=model.generate,
         #                     fn=hello,
