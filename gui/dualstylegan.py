@@ -139,14 +139,21 @@ class Model:
     # Copy the modified code that accepts two cartoon styles
     def generate(self, style_type: str, style_id: int, structure_weight: float,
                  color_weight: float, structure_only: bool,
-                 instyle: torch.Tensor) -> np.ndarray:
+                 instyle: torch.Tensor, style_id_1: int, weight:int, weight_1:int) -> np.ndarray:
         generator = self.generator_dict[style_type]
         exstyles = self.exstyle_dict[style_type]
 
-        style_id = int(style_id)
-        stylename = list(exstyles.keys())[style_id]
+        all_stylenames = list(exstyles.keys())
+
+        style_id, style_id_1 = int(style_id), int(style_id_1)
+        stylename = all_stylenames[style_id]
+        stylename_1 = all_stylenames[style_id_1]
 
         latent = torch.tensor(exstyles[stylename]).to(self.device)
+        latent_1 = torch.tensor(exstyles[stylename_1]).to(self.device)
+
+        latent = latent*weight + latent_1*weight_1
+        # copy the bit of the style_transfer.py file that corresponds to 2 images
         if structure_only:
             latent[0, 7:18] = instyle[0, 7:18]
         exstyle = generator.generator.style(

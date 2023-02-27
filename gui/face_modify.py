@@ -4,8 +4,8 @@ Use the facial_editing directory to do the work.
 """
 import numpy as np
 
-from ..facial_editing.models.stylegan_generator import StyleGANGenerator
-from ..facial_editing.utils.manipulator import linear_interpolate
+from facial_editing.models.stylegan_generator import StyleGANGenerator
+from facial_editing.utils.manipulator import linear_interpolate
 # from ..facial_editing.utils.manipulator import project_boundary
 
 AGE_BOUNDARY_PATH = "../facial_editing/boundaries/stylegan_celebahq_age_w_boundary.npy" 
@@ -15,7 +15,7 @@ SMILE_BOUNDARY_PATH = "../facial_editing/boundaries/stylegan_celebahq_smile_w_bo
 
 # this is the class that we can import in the app.py file that does facial editing
 class FaceModifier:
-    def __init__(self, latent_code):
+    def __init__(self):
         self.model = StyleGANGenerator("stylegan_celebahq", None)
         self.latent_space_type = "wp" # w+ latent space
         self.kwargs = {'latent_space_type': self.latent_space_type}
@@ -24,7 +24,7 @@ class FaceModifier:
         self.pose_boundary = np.load(POSE_BOUNDARY_PATH)
         self.gender_boundary = np.load(GENDER_BOUNDARY_PATH)
         self.smile_boundary = np.load(SMILE_BOUNDARY_PATH)
-        self.latent_code = latent_code if latent_code is not None else np.empty((1,18,512))
+        self.latent_code = np.empty((1,18,512))
 
     def set_latent_code(self, latent_code):
         self.latent_code = latent_code
@@ -36,6 +36,12 @@ class FaceModifier:
                                 start_distance=offset,
                                 end_distance=offset,
                                 steps=1)
+        # print(code.shape)
+        # print("============================================================")
+        # print("modified latent code is of shape:")
+        # print(code.shape)
+        # print("============================================================")
+
         return code
 
     def synthesize(self):
@@ -61,7 +67,7 @@ class FaceModifier:
         
         # no modifications made to the image
         if (age_offset == 0) and (pose_offset == 0) and (smile_offset == 0) and (gender_offset == 0):
-            return self.synthesize(self.latent_code)
+            return self.synthesize(), self.latent_code
 
         if age_offset != 0:
             self.change_age(age_offset)
@@ -72,4 +78,6 @@ class FaceModifier:
         if gender_offset != 0:
             self.change_gender(gender_offset)
 
-        return self.synthesize(self.latent_code), self.latent_code
+        output = self.synthesize()
+        # print(output.shape)
+        return output[0], self.latent_code

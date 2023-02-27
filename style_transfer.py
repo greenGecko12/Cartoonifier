@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
                 # TODO: allow the user to specify later how much of each they want in the output image
                 latent = latent.add(latent1) # addition of two tensors
-                latent = latent / 2;
+                latent = latent / 2
 
                 save_name = args.name+'_%s_%s_%s'%(args.cartoon_image_1, args.cartoon_image_2, os.path.basename(args.content).split('.')[0])
                 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
                 latent2 = torch.tensor(exstyles[stylename]).to(device)
 
                 latent = latent.add(latent2) # addition of two tensors
-                latent = latent / 2;
+                latent = latent / 2
 
                 if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
                     S2 = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
@@ -220,11 +220,9 @@ if __name__ == "__main__":
 
                 save_name = args.name+'_%s_%s_%s'%(args.style_id, args.style_id_2, os.path.basename(args.content).split('.')[0])
 
-
         if args.preserve_color: #TODO: investigate - what is preserve_color?
             latent[:,7:18] = instyle[:,7:18]
         # extrinsic style code
-        # TODO: what exactly is the line below doing in terms of reshaping the vector
         exstyle = generator.generator.style(latent.reshape(latent.shape[0]*latent.shape[1], latent.shape[2])).reshape(latent.shape)
 
         # style transfer - WHERE the image is generated
