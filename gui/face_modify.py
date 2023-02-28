@@ -80,4 +80,6 @@ class FaceModifier:
 
         output = self.synthesize()
         # print(output.shape)
+        # print("=======================================") 
+        # print(self.latent_code.shape)
         return output[0], self.latent_code

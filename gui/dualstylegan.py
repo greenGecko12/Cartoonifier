@@ -133,6 +133,7 @@ class Model:
                                         resize=False)
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
         img_rec = self.postprocess(img_rec[0])
+        np.save("./instyle",instyle.detach().numpy())
         return img_rec, instyle, img_rec
 
     # @torch.inference_mode()
@@ -145,14 +146,16 @@ class Model:
 
         all_stylenames = list(exstyles.keys())
 
-        style_id, style_id_1 = int(style_id), int(style_id_1)
+        style_id  = int(style_id)
         stylename = all_stylenames[style_id]
-        stylename_1 = all_stylenames[style_id_1]
-
         latent = torch.tensor(exstyles[stylename]).to(self.device)
-        latent_1 = torch.tensor(exstyles[stylename_1]).to(self.device)
 
-        latent = latent*weight + latent_1*weight_1
+        style_id_1 = int(style_id_1)
+        if style_id_1 != -1:
+            stylename_1 = all_stylenames[style_id_1]
+            latent_1 = torch.tensor(exstyles[stylename_1]).to(self.device)
+            latent = latent*weight + latent_1*weight_1
+
         # copy the bit of the style_transfer.py file that corresponds to 2 images
         if structure_only:
             latent[0, 7:18] = instyle[0, 7:18]

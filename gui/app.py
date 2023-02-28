@@ -101,7 +101,7 @@ def main():
                     gr.Markdown(value=text)
 
                     style_index_1 = gr.Slider(0,316,value=26,step=1,label='Style Image Index 1', interactive=True)
-                    style_index_2 = gr.Slider(-1,316,value=-1,step=1,label='Style Image Index 2', interactive=True)
+                    style_index_2 = gr.Slider(-1,316,value=-1,step=1,label='Style Image Index 2', interactive=True) # -1 means not selected 
                     style_type = gr.Radio(model.style_types, label='Style Types', visible=False, value="cartoon")
                     confirm_styles = gr.Button("Confirm choices")
             
@@ -183,7 +183,7 @@ def main():
                             inputs=aligned_face,
                             outputs=[
                                 reconstructed_face,
-                                instyle,
+                                instyle, # intrinsic style code of shape (1,18,512)
                                 original
                             ])
         
@@ -217,7 +217,7 @@ def main():
                                 structure_weight,
                                 color_weight,
                                 structure_only,
-                                instyle,
+                                instyle, # TODO: change this to 'instyle_modified' when the facial_modification part works
                                 style_index_2, 
                                 weight_1, 
                                 weight_2

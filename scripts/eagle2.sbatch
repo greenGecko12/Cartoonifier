@@ -30,12 +30,12 @@ module load CUDA/11.6.0
 #     -o facial_editing/results/pggan_celebahq_smile_editing
 
 
-LATENT_CODE_NUM=1
-python facial_editing/edit.py \
-    --model_name stylegan_celebahq \
-    --output_dir facial_editing/results/check_if_working \
-    --boundary_path facial_editing/boundaries/stylegan_celebahq_smile_boundary.npy \
-    -n "$LATENT_CODE_NUM" 
+# LATENT_CODE_NUM=1
+# python facial_editing/edit.py \
+#     --model_name stylegan_celebahq \
+#     --output_dir facial_editing/results/check_if_working \
+#     --boundary_path facial_editing/boundaries/stylegan_celebahq_smile_boundary.npy \
+#     -n "$LATENT_CODE_NUM" 
 
 # --latent_space_type wp \
 # --input_latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/stylegan_celebahq/wp.npy \
