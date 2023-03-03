@@ -28,7 +28,7 @@ from model.encoder.psp import pSp
 from torch.nn import functional as F
 import torchvision
 model_path = os.path.join("./checkpoint/", 'encoder.pt')
-path = "/home/sai_k/DualStyleGAN/pics/000000.jpg"
+path = "/home/sai_k/DualStyleGAN/data/cartoon_faces/Dio-Brando.png"
 
 ckpt = torch.load(model_path, map_location='cpu') # checkpoint
 opts = ckpt['opts']
@@ -49,7 +49,7 @@ img_rec = torch.clamp(img_rec.detach(), -1, 1)
 viz=[I, img_rec]
 # print(type(I), type(img_rec), type(instyle))
 
-np.save("./instyle_2", instyle.detach().cpu().numpy())
+np.save("./instyle_4", instyle.detach().cpu().numpy())
 
 # save_image(I.cpu(), "original_face.jpg")
 # save_image(img_rec.cpu(), "reconstructed_face.jpg")

@@ -3,15 +3,18 @@ This file will allow the user to modify the generated image by performing some b
 Use the facial_editing directory to do the work.
 """
 import numpy as np
+# import sys
 
-from facial_editing.models.stylegan_generator import StyleGANGenerator
-from facial_editing.utils.manipulator import linear_interpolate
+# sys.path.append("..")
+
+from encoder.InterFaceGAN.models.stylegan_generator import StyleGANGenerator
+from encoder.InterFaceGAN.utils.manipulator import linear_interpolate
 # from ..facial_editing.utils.manipulator import project_boundary
 
-AGE_BOUNDARY_PATH = "../facial_editing/boundaries/stylegan_celebahq_age_w_boundary.npy" 
-POSE_BOUNDARY_PATH = "../facial_editing/boundaries/stylegan_celebahq_pose_w_boundary.npy" 
-GENDER_BOUNDARY_PATH = "../facial_editing/boundaries/stylegan_celebahq_gender_w_boundary.npy" 
-SMILE_BOUNDARY_PATH = "../facial_editing/boundaries/stylegan_celebahq_smile_w_boundary.npy" 
+AGE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_age_w_boundary.npy" 
+POSE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_pose_w_boundary.npy" 
+GENDER_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_gender_w_boundary.npy" 
+SMILE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_smile_w_boundary.npy" 
 
 # this is the class that we can import in the app.py file that does facial editing
 class FaceModifier:
