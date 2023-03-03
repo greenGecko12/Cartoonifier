@@ -29,20 +29,39 @@ module load CUDA/11.6.0
 #     -n "$LATENT_CODE_NUM" \
 #     -o facial_editing/results/pggan_celebahq_smile_editing
 
-
-LATENT_CODE_NUM=1
-python facial_editing/edit.py \
-    --model_name stylegan_celebahq \
-    --output_dir facial_editing/results/check_if_working \
-    --boundary_path facial_editing/boundaries/stylegan_celebahq_smile_boundary.npy \
-    -n "$LATENT_CODE_NUM" 
-
-# --latent_space_type wp \
-# --input_latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/stylegan_celebahq/wp.npy \
-
-# NUM=1
-# python facial_editing/generate_data.py \
-#     --model_name stylegan_celebahq  \
-#     --output_dir facial_editing/data/generating_faces \
+# python facial_editing/edit.py \
+#     --model_name stylegan_celebahq \
+#     --output_dir facial_editing/new_results/inputted_face \
+#     --boundary_path facial_editing/boundaries/stylegan_celebahq_smile_w_boundary.npy \
 #     --latent_space_type wp \
-#     --num "$NUM"
+#     --input_latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/instyle.npy
+
+
+# python facial_editing/generate_data.py \
+#     --model_name stylegan_ffhq  \
+#     --output_dir facial_editing/new_results/test_encoder \
+#     --latent_space_type wp \
+#     --latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/female_face.npy
+
+
+# python facial_editing/generate_data.py --model_name stylegan_celebahq --output_dir facial_editing/new_results/encoder_test --num 1
+
+# python facial_editing/edit.py \
+#     --model_name stylegan_ffhq \
+#     --output_dir facial_editing/new_results/test_encoder_4  \
+#     --boundary_path facial_editing/boundaries/stylegan_ffhq_smile_w_boundary.npy \
+#     --input_latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/female_face.npy \
+#     --latent_space_type wp
+
+# --generate_style \
+
+
+python facial_editing/edit.py \
+    --model_name stylegan_ffhq \
+    --output_dir facial_editing/new_results/test_encoder_6  \
+    --boundary_path facial_editing/boundaries/stylegan_ffhq_smile_w_boundary.npy \
+    --input_latent_codes_path /dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/data/female_face.npy \
+    --latent_space_type wp \
+    --start_distance 0 \
+    --end_distance 0 \
+    --steps 1

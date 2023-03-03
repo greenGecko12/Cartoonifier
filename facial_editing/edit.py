@@ -48,11 +48,11 @@ def parse_args():
                         help='Latent space used in StyleGAN. (default: `Z`)')
     parser.add_argument('--start_distance', type=float, default=-1.0,
                         help='Start point for manipulation in latent space. '
-                             '(default: -3.0)')
+                             '(default: -1.0)')
     parser.add_argument('--end_distance', type=float, default=1.0,
                         help='End point for manipulation in latent space. '
-                             '(default: 3.0)')
-    parser.add_argument('--steps', type=int, default=10,
+                             '(default: 1.0)')
+    parser.add_argument('--steps', type=int, default=4,
                         help='Number of steps for image editing. (default: 10)')
 
     # add whether the user wants to specify any conditional boundaries

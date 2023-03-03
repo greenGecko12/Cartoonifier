@@ -25,3 +25,4 @@ facial_editing/models/pretrain/
 facial_editing/data/
 facial_editing/boundaries/
 .vscode/settings.json
+facial_editing/new_results/
