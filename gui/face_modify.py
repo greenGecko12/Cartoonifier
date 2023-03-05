@@ -16,6 +16,8 @@ POSE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_pose_
 GENDER_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_gender_w_boundary.npy" 
 SMILE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_smile_w_boundary.npy" 
 
+# have different sets of boundaries for now
+
 # this is the class that we can import in the app.py file that does facial editing
 class FaceModifier:
     def __init__(self):
@@ -64,7 +66,7 @@ class FaceModifier:
     def change_gender(self, offset):
         self.latent_code = self.modify_latent_code(self.gender_boundary, offset)
     
-    def modify(self, age_offset,  gender_offset, pose_offset, smile_offset,) :
+    def modify(self, age_offset,  gender_offset, pose_offset, smile_offset):
         # preprocessing
         self.latent_code = self.model.preprocess(self.latent_code, **self.kwargs)
         
@@ -86,3 +88,7 @@ class FaceModifier:
         # print("=======================================") 
         # print(self.latent_code.shape)
         return output[0], self.latent_code
+    
+
+
+

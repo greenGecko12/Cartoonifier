@@ -133,7 +133,7 @@ class Model:
                                         resize=False)
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
         img_rec = self.postprocess(img_rec[0])
-        np.save("./instyle",instyle.detach().numpy())
+        np.save("./randomface",instyle.detach().numpy())
         return img_rec, instyle, img_rec
 
     # @torch.inference_mode()

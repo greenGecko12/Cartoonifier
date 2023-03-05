@@ -27,4 +27,9 @@ encoder/InterFaceGAN/boundaries/
 .vscode/settings.json
 encoder/assets
 new_output
-modified_faces
+gui/modified_faces
+gui/age
+gui/gender
+gui/generated
+gui/smiling_man
+hyperplanes/*.jpg

@@ -50,7 +50,9 @@ def main():
 
     # latent code is currenly not set in the constructor
     # use set_latent_code() defined in the FaceModifier class
-    modifier = FaceModifier()
+    modifier = FaceModifier() # this is causing the logs to be printed to the console
+
+    
 
     def modify_face(latent_code, age, gender, pose, smile):
         # first set the latent code
