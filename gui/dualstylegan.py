@@ -4,6 +4,7 @@ import argparse
 import os
 import pathlib
 import subprocess
+from tempfile import TemporaryFile
 import sys
 from typing import Callable
 
@@ -14,7 +15,7 @@ import PIL.Image
 import torch
 import torch.nn as nn
 import torchvision.transforms as T
-# from time import sleep
+from time import sleep
 
 sys.path.append("..")
 
@@ -121,9 +122,9 @@ class Model:
         return tensor.cpu().numpy().transpose(1, 2, 0)
 
     # @torch.inference_mode()
-    def reconstruct_face(self,
-                         image: np.ndarray) -> tuple[np.ndarray, torch.Tensor]:
-        image = PIL.Image.fromarray(image)
+    def reconstruct_face(self, image: np.ndarray, PIL_true:bool=True) -> tuple[np.ndarray, torch.Tensor, np.ndarray]:
+        if PIL_true:
+            image = PIL.Image.fromarray(image)
         input_data = self.transform(image).unsqueeze(0).to(self.device)
         img_rec, instyle = self.encoder(input_data,
                                         randomize_noise=False,
@@ -133,28 +134,71 @@ class Model:
                                         resize=False)
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
         img_rec = self.postprocess(img_rec[0])
-        np.save("./randomface",instyle.detach().numpy())
+        # np.save("./randomface",instyle.detach().numpy())
         return img_rec, instyle, img_rec
+    
+    def encode_cartoon_face(self, image , skipAlignment: bool): # image for now is the PATH
+        if skipAlignment: # DOESN'T WORK
+            empty = np.zeros((1024, 1024, 3))
+            image_2 = dlib.load_rgb_image(image)
+            # print(type(image_2))
+            # image_2 = np.load(image, allow_pickle=True)
+            # sleep(2)
+            # calling the method just above to reconstuct the cartoon face in StyleGAN's latent space
+            
+            # img_rec, exstyle, _ = self.reconstruct_face(image) 
+            # img_rec = torch.clamp(img_rec.detach(), -1, 1)
+            # img_rec = self.postprocess(img_rec[0])          
+
+            img_rec, exstyle = self._helper(image_2, True)
+            return empty, img_rec, exstyle
+        else: # when facial alignment has been ENABLED ##################### WORKS
+            # image_path = np.save("/home/sai_k/DualStyleGAN/gui/latent_codes/cartoon", image)
+
+            # outfile = TemporaryFile()
+            # np.save(outfile, image)
+            aligned_face = self.detect_and_align_face(image) # returns PIL image
+
+            # img_rec, exstyle, _ = self.reconstruct_face(aligned_face) 
+            # img_rec = torch.clamp(img_rec.detach(), -1, 1)
+            # img_rec = self.postprocess(img_rec[0])
+
+            """The line below might come in handy if error about CPU/GPU"""
+            # instyle = instyle.detach().cpu().numpy()
+            img_rec, exstyle = self._helper(aligned_face, False)
+            return aligned_face, img_rec, exstyle
+
+    def _helper(self, image, flag):
+        img_rec, exstyle, _ = self.reconstruct_face(image, flag) 
+        # img_rec = torch.clamp(img_rec.detach(), -1, 1)
+        # img_rec = self.postprocess(img_rec[0])
+
+        return img_rec, exstyle
 
     # @torch.inference_mode()
     # Copy the modified code that accepts two cartoon styles
     def generate(self, style_type: str, style_id: int, structure_weight: float,
                  color_weight: float, structure_only: bool,
-                 instyle: torch.Tensor, style_id_1: int, weight:int, weight_1:int) -> np.ndarray:
+                 instyle: torch.Tensor, style_id_1: int, weight:int, weight_1:int, user_exstyle) -> np.ndarray:
         generator = self.generator_dict[style_type]
-        exstyles = self.exstyle_dict[style_type]
 
-        all_stylenames = list(exstyles.keys())
+        if user_exstyle is None:
+            exstyles = self.exstyle_dict[style_type]
+            all_stylenames = list(exstyles.keys())
 
-        style_id  = int(style_id)
-        stylename = all_stylenames[style_id]
-        latent = torch.tensor(exstyles[stylename]).to(self.device)
-
-        style_id_1 = int(style_id_1)
-        if style_id_1 != -1:
-            stylename_1 = all_stylenames[style_id_1]
-            latent_1 = torch.tensor(exstyles[stylename_1]).to(self.device)
-            latent = latent*weight + latent_1*weight_1
+            style_id  = int(style_id)
+            stylename = all_stylenames[style_id]
+            latent = torch.tensor(exstyles[stylename]).to(self.device) 
+            
+            style_id_1 = int(style_id_1)
+            if style_id_1 != -1:
+                stylename_1 = all_stylenames[style_id_1]
+                latent_1 = torch.tensor(exstyles[stylename_1]).to(self.device)
+                latent = latent*weight + latent_1*weight_1
+        else:
+            # print(type(user_exstyle))
+            # if user provides their own cartoon image, then that takes more priority
+            latent = user_exstyle.to(self.device)
 
         # copy the bit of the style_transfer.py file that corresponds to 2 images
         if structure_only:

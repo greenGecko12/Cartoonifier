@@ -1,7 +1,7 @@
 import numpy as np
 
 # path = "/dcs/20/u2004267/CS310/DualStyleGAN/facial_editing/boundaries/stylegan_celebahq_pose_boundary.npy"
-path = "/home/sai_k/DualStyleGAN/encoder/latent_codes/female_face.npy"
+path = "/home/sai_k/DualStyleGAN/encoder/InterFaceGAN/boundaries/stylegan_ffhq_gender_w_boundary.npy"
 boundary = None
 
 boundary = np.load(path, allow_pickle=True)

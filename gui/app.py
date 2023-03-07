@@ -9,7 +9,8 @@ from PIL import Image
 
 # importing the Generator (a brief version of style_transfer.py)
 from dualstylegan import Model
-from face_modify import FaceModifier
+from face_modify import FaceModifier2
+from torch import device
 
 # import the main() function from the edit.py file in the facial_editing directory
 DESCRIPTION = '# Cartoonify your face with the power of GANs!'
@@ -44,16 +45,16 @@ def update_sliders(slider):
     return 100-slider
 
 def main():
-    device="cpu"
+    deviceToRun=device("cuda")
     # change to GPU later if required
-    model = Model(device=device) 
+    model = Model(device=deviceToRun) 
+    # model = {"style_types": "cartoon"}
 
     # latent code is currenly not set in the constructor
     # use set_latent_code() defined in the FaceModifier class
-    modifier = FaceModifier() # this is causing the logs to be printed to the console
-
+    # modifier = FaceModifier() # this is causing the logs to be printed to the console --> stylegan_generator.py
+    modifier2 = FaceModifier2(model, deviceToRun)
     
-
     def modify_face(latent_code, age, gender, pose, smile):
         # first set the latent code
         # print(type(latent_code))
@@ -63,10 +64,16 @@ def main():
         latent_code_numpy = latent_code.cpu().detach().numpy()
         # print(latent_code_numpy.shape)
 
-        modifier.set_latent_code(latent_code_numpy)
+        modifier2.set_latent_code(latent_code_numpy)
 
-        face, modified_code = modifier.modify(age, gender, pose, smile)
+        face, modified_code = modifier2.modify(age, gender, pose, smile)
         return face, modified_code
+    
+    def clear_selection():
+        # print("hi")
+        aligned_cartoon_face.value=None
+        reconstructed_cartoon_image.value=None
+        return None # this is the value of exstyle
 
     with gr.Blocks(css='style.css') as demo:
         gr.Markdown(DESCRIPTION)
@@ -132,8 +139,8 @@ def main():
                         - The two weights have to add to a 100! (This will be done automatically though)
                         - If you haven't specifed a second cartoon image, then changing the second will not have any effect on the generated cartoon image""")
             gr.HTML('''<p></p><p></p>''')
-            weight_1 = gr.Slider(0, 100, 50, step=1, label='Specify weight of Image 1', interactive=True)
-            weight_2 = gr.Slider(0,100, 50, step=1, label='Specify weight of Image 2', interactive=True )
+            weight_1 = gr.Slider(0, 100, 50, step=10, label='Specify weight of Image 1', interactive=True)
+            weight_2 = gr.Slider(0,100, 50, step=10, label='Specify weight of Image 2', interactive=True)
 
         with gr.Box():
             gr.Markdown('''### Step 4: (**OPTIONAL**) Facial Modification
@@ -156,8 +163,34 @@ def main():
                 with gr.Column():
                     modified = gr.Image(label='Modified Image', type='numpy', interactive=False)
                     instyle_modified = gr.Variable()
+
         with gr.Box():
-            gr.Markdown('''### Step 5: Create cartoon character
+            gr.Markdown('''### Step 5: (**OPTIONAL**) Upload your own Cartoon character
+                            - Please ensure this contains just the face of the cartoon. Note: you can crop the image once uploaded
+                            - Try to make it as close to a square as possible. But don't worry if that is not the case
+                            - NOTE: uploading your own cartoon image will have priority over selecting an existing from the grid above.
+                            ''')
+            with gr.Row():
+                with gr.Column():
+                    with gr.Row():
+                        user_cartoon_image = gr.Image(label='Uploaded Cartoon image',type='filepath')
+                    with gr.Row():
+                        ignore_facial_alignment = gr.Checkbox(label='Skip facial alignment')
+                    with gr.Row():
+                        confirm_cartoon_image = gr.Button('Submit for processing')
+                    with gr.Row():
+                        clear_selection_button = gr.Button("Clear Selection")
+                with gr.Column():
+                    with gr.Row():
+                        aligned_cartoon_face = gr.Image(label='Aligned Cartoon Face', type='numpy')
+                with gr.Column():
+                    with gr.Row():
+                        reconstructed_cartoon_image = gr.Image(label='Reconstructed Face in StyleGAN latent space', type='numpy')
+                        # this is the extrinsic style code of a cartoon face the user may have provided
+                        exstyle = gr.Variable(value=None) 
+        
+        with gr.Box():
+            gr.Markdown('''### Step 6: Create cartoon character
                         - Adjust **Structure Weight** and **Color Weight**.
                             - These are weights for the style image, so the larger the value, the closer the resulting image will be to the style image.
                         - Hit the **Generate** button.
@@ -189,6 +222,26 @@ def main():
                                 original
                             ])
         
+        # this bit corresponds to Step 5: using your own cartoon image
+        #########################################################################
+        confirm_cartoon_image.click(
+            fn=model.encode_cartoon_face,
+            inputs=[user_cartoon_image,ignore_facial_alignment],
+            outputs=[aligned_cartoon_face, reconstructed_cartoon_image, exstyle]
+        )
+
+        user_cartoon_image.clear(
+            fn=clear_selection, 
+            inputs=[],
+            outputs=exstyle            
+        )
+
+        clear_selection_button.click(
+            fn=clear_selection, 
+            inputs=[],
+            outputs=exstyle    
+        )
+        ##########################################################################
         weight_1.change(fn=update_sliders,
                         inputs=[weight_1],
                         outputs=weight_2)
@@ -210,7 +263,6 @@ def main():
                                         smile
                                     ], 
                                     outputs=[modified, instyle_modified])
-
         generate_button.click(
                             fn=model.generate,
                             inputs=[
@@ -222,7 +274,8 @@ def main():
                                 instyle, # TODO: change this to 'instyle_modified' when the facial_modification part works
                                 style_index_2, 
                                 weight_1, 
-                                weight_2
+                                weight_2, 
+                                exstyle
                               ],
                               outputs=result)
         

@@ -37,7 +37,7 @@ class TestOptions():
         # there are default parameters which are OVERWRITTEN when the user passes their own arguments
         self.parser.add_argument("--content", type=str, default='./data/content/randomface.jpg', help="path of the content image")
         self.parser.add_argument("--style", type=str, default='cartoon', help="target style type")
-        self.parser.add_argument("--style_id", type=int, default=26, help="the id of the style image")
+        self.parser.add_argument("--style_id", type=int, default=29, help="the id of the style image")
         self.parser.add_argument("--style_id_2", type=int, default=None, help="the id of the SECOND style image")
         self.parser.add_argument("--truncation", type=float, default=0.75, help="truncation for intrinsic style code (content)")
         self.parser.add_argument("--weight", type=float, nargs=18, default=[0.75]*7+[1]*11, help="weight of the extrinsic style")
@@ -201,7 +201,7 @@ if __name__ == "__main__":
             stylename = list(exstyles.keys())[args.style_id] # selecting the reference style image
             # latent = torch.tensor(exstyles[stylename]).to(device) 
 
-            latent = torch.tensor(np.load("/home/sai_k/DualStyleGAN/instyle_3.npy", allow_pickle=True)).to(device) 
+            latent = torch.tensor(np.load("/home/sai_k/DualStyleGAN/lance.npy", allow_pickle=True)).to(device) 
 
             save_name = args.name+'_%d_%s'%(args.style_id, os.path.basename(args.content).split('.')[0])
 

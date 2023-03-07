@@ -9,7 +9,7 @@ model = Model(device=device)
 
 # need to import the latent code
 codes = np.load("/home/sai_k/DualStyleGAN/gui/randomface.npy", allow_pickle=True)
-boundary = np.load("/home/sai_k/DualStyleGAN/stylegan2directions/gender.npy", allow_pickle=True)
+boundary = np.load("/home/sai_k/DualStyleGAN/hyperplanes/gender.npy", allow_pickle=True)
 boundary1 = np.expand_dims(boundary, axis=0)
 
 # print("Shape of boundary", end=": ")
@@ -20,13 +20,13 @@ boundary1 = np.expand_dims(boundary, axis=0)
 
 # for i in range(1, 10):
 
-boundary2 = np.multiply(boundary1, -8)
+boundary2 = np.multiply(boundary1, 5)
 
 # NOTE: np.add() causes this error: RuntimeError: expected scalar type Double but found Float
 # NOTE: just use '+=' for now 
 # codes = np.add(codes, boundary2) 
 
-codes -= boundary2
+codes += boundary2
 
 codes2 = torch.from_numpy(codes)
 
@@ -51,7 +51,7 @@ img_rec = model.postprocess(img_rec[0])
 img  = Image.fromarray(img_rec)
 # print(type(img))
 # Saving the image
-img.save(f"/home/sai_k/DualStyleGAN/gui/gender/modified_man_3.jpg")
+img.save(f"/home/sai_k/DualStyleGAN/gui/gender/modified_man_7.jpg")
 
 print("Images saved successfully")
 
