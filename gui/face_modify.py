@@ -3,44 +3,66 @@ This file will allow the user to modify the generated image by performing some b
 Use the facial_editing directory to do the work.
 """
 import numpy as np
-# import sys
+from torch import from_numpy, clamp
 
-# sys.path.append("..")
+HAIR_COLOUR_BOUNDARY = "/home/sai_k/DualStyleGAN/hyperplanes/stylegan2_ffhq_z/boundary_Black_Hair.npy" # Works really well
+GENDER_BOUNDARY_PATH_2 = "/home/sai_k/DualStyleGAN/hyperplanes/stylegan2_ffhq_z/boundary_Gender.npy" # WORKS really well
+# HAIR_COLOUR_BOUNDARY = "/home/sai_k/DualStyleGAN/hyperplanes/age.npy"
 
-# from encoder.InterFaceGAN.models.stylegan_generator import StyleGANGenerator
-# from encoder.InterFaceGAN.utils.manipulator import linear_interpolate
-# from ..facial_editing.utils.manipulator import project_boundary
+AGE_BOUNDARY = "/home/sai_k/DualStyleGAN/hyperplanes/stylegan2_ffhq_z/boundary_Pale_Skin.npy" # leave this as is
 
-AGE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_age_w_boundary.npy" 
-POSE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_pose_w_boundary.npy" 
-GENDER_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_gender_w_boundary.npy" 
-SMILE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_smile_w_boundary.npy" 
+BALDNESS_path = "/home/sai_k/DualStyleGAN/hyperplanes/stylegan2_ffhq_z/boundary_Bald.npy" # Works well
 
-# have different sets of boundaries for now
+"""
 
-# this is the class that we can import in the app.py file that does facial editing
-class FaceModifier: # NOT TO BE INSTANTIATED ==> MORE LIKE AN INTERFACE REALLY
-    def __init__(self):
-        # self.model = StyleGANGenerator("stylegan_celebahq", None)
-        # self.latent_space_type = "wp" # w+ latent space
-        # self.kwargs = {'latent_space_type': self.latent_space_type}
-        # # the 4 attribute bondaries 
-        # self.age_boundary = np.load(AGE_BOUNDARY_PATH)
-        # self.pose_boundary = np.load(POSE_BOUNDARY_PATH)
-        # self.gender_boundary = np.load(GENDER_BOUNDARY_PATH)
-        # self.smile_boundary = np.load(SMILE_BOUNDARY_PATH)
+(1 1 512) 
+(1 18, 512)
+Notes for each hyperplane
+
+**Age: DOES NOT WORK AT ALL
+**Gender: Works
+**Smile: DOES NOT WORK AT ALL
+**Yaw: DOES NOT WORK WELL
+
+*Eye Ratio: DOES NOT WORK AT ALL
+*Lip Ratio: Works as smile
+*Mouth Open: Works as Smile quite well
+*Roll: not well
+"""
+
+class FaceModifier2: 
+    def __init__(self, model, device):
+        self.model = model # dualstylegan.py
+        self.device = device
+        # remember to unsqueeze them before adding to the latent code
+        self.age_boundary = np.expand_dims(np.load(HAIR_COLOUR_BOUNDARY,allow_pickle=True), axis=0)
+        # self.age_boundary = np.expand_dims(np.repeat(np.load(HAIR_COLOUR_BOUNDARY,allow_pickle=True),18,axis=0), axis=0)
+        self.pose_boundary = np.expand_dims(np.load(AGE_BOUNDARY,allow_pickle=True), axis=0)
+        self.gender_boundary = np.expand_dims(np.load(GENDER_BOUNDARY_PATH_2,allow_pickle=True), axis=0)
+        self.smile_boundary = np.expand_dims(np.load(BALDNESS_path,allow_pickle=True), axis=0)
         self.latent_code = np.empty((1,18,512))
+        self.latent_code_copy = np.empty((1,18,512))
 
     def set_latent_code(self, latent_code):
         self.latent_code = latent_code
+        self.latent_code_copy = latent_code
 
     # all the methods below conduct inferencing   
     def modify_latent_code(self, boundary, offset):
-        # code=linear_interpolate(self.latent_code, 
-        #                         boundary,
-        #                         start_distance=offset,
-        #                         end_distance=offset,
-        #                         steps=1)
+        # adding a multiple of the hyperplane
+        boundary2 = boundary * offset # element-wise multiplication
+        self.latent_code = self.latent_code_copy
+        self.latent_code += boundary2
+
+
+        
+        # both of these were of shape (1, 18, 512)
+        # print(boundary2.shape) 
+        # print(self.latent_code.shape)
+
+        # np.save("./modified_latent", self.latent_code)
+
+        # code=linear_interpolate(self.latent_code,boundary,start_distance=offset,end_distance=offset,steps=1)
 
         # print(code.shape)
         # print("============================================================")
@@ -48,26 +70,22 @@ class FaceModifier: # NOT TO BE INSTANTIATED ==> MORE LIKE AN INTERFACE REALLY
         # print(code.shape)
         # print("============================================================")
 
-        # adding a multiple of the hyperplane before returning it
-        modified_code = np.add(self.latent_code, np.multiply(boundary, offset))
-        return modified_code
-
-    def synthesize(self):
-        outputs = self.model.easy_synthesize(self.latent_code, **self.kwargs) 
-        return outputs['image']
+        # modified_code = np.add(self.latent_code, np.multiply(boundary, offset))
+        # return modified_code
+        # self.latent_code
     
     # each method only returns 1 image  --> offset = start_distance = end_distance
     def change_age(self, offset):
-        self.latent_code = self.modify_latent_code(self.age_boundary, offset)
+        self.modify_latent_code(self.age_boundary, offset)
 
     def change_pose(self, offset):
-        self.latent_code = self.modify_latent_code(self.pose_boundary, offset)
+        self.modify_latent_code(self.pose_boundary, offset)
     
     def change_smile(self, offset):
-        self.latent_code = self.modify_latent_code(self.smile_boundary, offset)
+        self.modify_latent_code(self.smile_boundary, offset)
 
     def change_gender(self, offset):
-        self.latent_code = self.modify_latent_code(self.gender_boundary, offset)
+        self.modify_latent_code(self.gender_boundary, offset)
     
     def modify(self, age_offset,  gender_offset, pose_offset, smile_offset):
         # preprocessing
@@ -87,42 +105,14 @@ class FaceModifier: # NOT TO BE INSTANTIATED ==> MORE LIKE AN INTERFACE REALLY
             self.change_gender(gender_offset)
 
         output = self.synthesize()
-        # print(output.shape)
-        # print("=======================================") 
-        # print(self.latent_code.shape)
-        return output[0], self.latent_code
-    
-##########################################################################
-
-# from dualstylegan import Model
-from torch import from_numpy, clamp
-# from PIL import Image
-
-AGE_BOUNDARY_PATH_2 = "/home/sai_k/DualStyleGAN/hyperplanes/age.npy"
-POSE_BOUNDARY_PATH_2 = "/home/sai_k/DualStyleGAN/hyperplanes/yaw.npy"
-GENDER_BOUNDARY_PATH_2 = "/home/sai_k/DualStyleGAN/hyperplanes/gender.npy"
-SMILE_BOUNDARY_PATH_2 = "/home/sai_k/DualStyleGAN/hyperplanes/mouth_open.npy"
-
-class FaceModifier2(FaceModifier): # inherting from Facemodifier
-    def __init__(self, model, device):
-        super().__init__()
-        # Inferencing on a GPU
-        # self.device = device("cuda")
-        # self.model = Model(device=self.device)
-        self.model = model
-        self.device = device
-        # remember to unsqueeze them before adding to the latent code
-        self.age_boundary = np.expand_dims(np.load(AGE_BOUNDARY_PATH_2,allow_pickle=True), axis=0)
-        self.pose_boundary = np.expand_dims(np.load(POSE_BOUNDARY_PATH_2,allow_pickle=True), axis=0)
-        self.gender_boundary = np.expand_dims(np.load(GENDER_BOUNDARY_PATH_2,allow_pickle=True), axis=0)
-        self.smile_boundary = np.expand_dims(np.load(SMILE_BOUNDARY_PATH_2,allow_pickle=True), axis=0)
+        return output, from_numpy(self.latent_code).to(self.device)
 
     def synthesize(self):
         codes2 = from_numpy(self.latent_code).to(self.device)
         # this bit is the decoder
         # NOTE: both of the returned items are pytorch tensors
         # NOTE: ignore the result_latent code -> it's utter garbage, just encodes a different face completely.
-        img_rec, result_latent = self.model.encoder.decoder(
+        img_rec, _ = self.model.encoder.decoder(
             [codes2],
             input_is_latent=False,
             randomize_noise=False,
@@ -157,6 +147,8 @@ class FaceModifier2(FaceModifier): # inherting from Facemodifier
 
 # print("Images saved successfully")
 
+# from dualstylegan import Model
+# from PIL import Image
 
 # NOTE: we don't save the result_latent code cos it's utter garbage, just encodes a different face completely.
 # np.save("./new_result_latent_2", result_latent.detach().numpy())

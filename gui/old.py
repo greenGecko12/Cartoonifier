@@ -101,3 +101,37 @@ Contains bits of code from the app.py file that aren't needed anymore
 #     parser.add_argument('--port', type=int)
 #     parser.add_argument('--disable-queue', dest='enable_queue', action='store_false')
 #     return parser.parse_args()
+
+
+
+# import sys
+# sys.path.append("..")
+
+# from encoder.InterFaceGAN.models.stylegan_generator import StyleGANGenerator
+# from encoder.InterFaceGAN.utils.manipulator import linear_interpolate
+# from ..facial_editing.utils.manipulator import project_boundary
+
+
+# AGE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_age_w_boundary.npy" 
+# POSE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_pose_w_boundary.npy" 
+# GENDER_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_gender_w_boundary.npy" 
+# SMILE_BOUNDARY_PATH = "../encoder/InterFaceGAN/boundaries/stylegan_celebahq_smile_w_boundary.npy" 
+
+# have different sets of boundaries for now
+
+
+# class FaceModifier: 
+#     def __init__(self):
+#         # self.model = StyleGANGenerator("stylegan_celebahq", None)
+#         # self.latent_space_type = "wp" # w+ latent space
+#         # self.kwargs = {'latent_space_type': self.latent_space_type}
+#         # # the 4 attribute bondaries 
+#         # self.age_boundary = np.load(AGE_BOUNDARY_PATH)
+#         # self.pose_boundary = np.load(POSE_BOUNDARY_PATH)
+#         # self.gender_boundary = np.load(GENDER_BOUNDARY_PATH)
+#         # self.smile_boundary = np.load(SMILE_BOUNDARY_PATH)
+#         pass
+
+#     def synthesize(self):
+#         outputs = self.model.easy_synthesize(self.latent_code, **self.kwargs) 
+#         return outputs['image']

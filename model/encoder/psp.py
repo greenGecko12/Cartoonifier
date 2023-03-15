@@ -31,13 +31,16 @@ class pSp(nn.Module):
 		# Load weights if needed
 		self.load_weights()
 
-	def set_encoder(self):
+	def set_encoder(self): # (1, 18, 512)
 		if self.opts.encoder_type == 'GradualStyleEncoder':
 			encoder = psp_encoders.GradualStyleEncoder(50, 'ir_se', self.opts)
+			# print("GradualStyleEncoder")
 		elif self.opts.encoder_type == 'BackboneEncoderUsingLastLayerIntoW':
 			encoder = psp_encoders.BackboneEncoderUsingLastLayerIntoW(50, 'ir_se', self.opts)
+			# print("BackboneEncoderUsingLastLayerIntoW")
 		elif self.opts.encoder_type == 'BackboneEncoderUsingLastLayerIntoWPlus':
 			encoder = psp_encoders.BackboneEncoderUsingLastLayerIntoWPlus(50, 'ir_se', self.opts)
+			# print("BackboneEncoderUsingLastLayerIntoWPlus")
 		else:
 			raise Exception('{} is not a valid encoders'.format(self.opts.encoder_type))
 		return encoder

@@ -54,6 +54,8 @@ def main():
     # use set_latent_code() defined in the FaceModifier class
     # modifier = FaceModifier() # this is causing the logs to be printed to the console --> stylegan_generator.py
     modifier2 = FaceModifier2(model, deviceToRun)
+
+    big = 2
     
     def modify_face(latent_code, age, gender, pose, smile):
         # first set the latent code
@@ -63,7 +65,6 @@ def main():
         # print(latent_code.size())
         latent_code_numpy = latent_code.cpu().detach().numpy()
         # print(latent_code_numpy.shape)
-
         modifier2.set_latent_code(latent_code_numpy)
 
         face, modified_code = modifier2.modify(age, gender, pose, smile)
@@ -151,13 +152,13 @@ def main():
                         ''')
             with gr.Row():
                 with gr.Column():
-                    original = gr.Image(label='Reconstructed Face', type='numpy', interactive=False)
+                    reconstructed_face_2 = gr.Image(label='Reconstructed Face', type='numpy', interactive=False)
                 
                 with gr.Column():
-                    age = gr.Slider(-1, 1, 0, step=0.1, label='Age')
-                    gender = gr.Slider(-1, 1, 0, step=0.1, label='Gender')
-                    pose = gr.Slider(-1, 1, 0, step=0.1, label='Pose')
-                    smile = gr.Slider(-1, 1, 0, step=0.1, label='Smile')
+                    age = gr.Slider(-big, big, 0, step=0.1, label='Hair Colour')
+                    gender = gr.Slider(-big, big, 0, step=0.1, label='Gender')
+                    pose = gr.Slider(-big, big, 0, step=0.1, label='Paleness')
+                    smile = gr.Slider(-big, big, 0, step=0.1, label='Amount of hair')
                     confirm_modified_face = gr.Button("Modify my face!")
 
                 with gr.Column():
@@ -198,9 +199,9 @@ def main():
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        structure_weight = gr.Slider(0,1,0.5,step=0.1,label='Structure Weight', interactive=True)
+                        structure_weight = gr.Slider(0,1,0.8,step=0.1,label='Structure Weight', interactive=True)
                     with gr.Row():
-                        color_weight = gr.Slider(0,1,0.5,step=0.1,label='Color Weight', interactive=True)
+                        color_weight = gr.Slider(0,1,0.8,step=0.1,label='Color Weight', interactive=True)
                     with gr.Row():
                         structure_only = gr.Checkbox(label='Structure Only')
                     with gr.Row():
@@ -219,7 +220,7 @@ def main():
                             outputs=[
                                 reconstructed_face,
                                 instyle, # intrinsic style code of shape (1,18,512)
-                                original
+                                reconstructed_face_2
                             ])
         
         # this bit corresponds to Step 5: using your own cartoon image
@@ -271,7 +272,7 @@ def main():
                                 structure_weight,
                                 color_weight,
                                 structure_only,
-                                instyle, # TODO: change this to 'instyle_modified' when the facial_modification part works
+                                instyle_modified, #TODO: change this to 'instyle_modified' once facial editing works
                                 style_index_2, 
                                 weight_1, 
                                 weight_2, 

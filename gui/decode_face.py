@@ -8,7 +8,7 @@ device=torch.device("cuda")
 model = Model(device=device) 
 
 # need to import the latent code
-codes = np.load("/home/sai_k/DualStyleGAN/anna.npy", allow_pickle=True)
+codes = np.load("/home/sai_k/DualStyleGAN/instyle_2.npy", allow_pickle=True)
 codes = torch.from_numpy(codes).to(device)
 
 # exstyles = np.load("/home/sai_k/DualStyleGAN/checkpoint/cartoon/refined_exstyle_code.npy", allow_pickle='TRUE').item()
@@ -36,6 +36,8 @@ img_rec = model.postprocess(img_rec[0])
 # Converting the numpy array into image
 img  = Image.fromarray(img_rec)
 # Saving the image
-img.save("/home/sai_k/DualStyleGAN/gui/astrid.jpg")
+img.save("instyle_2_face.jpg")
 print(" The Image is saved successfully")
 
+
+# python encoder/InterFaceGAN/generate_data.py --model_name stylegan_ffhq --output_dir /home/sai_k/DualStyleGAN/pics/random_face_stylegan1 --latent_space_type wp --latent_codes_path /home/sai_k/DualStyleGAN/gui/latent_codes/woman.npy
