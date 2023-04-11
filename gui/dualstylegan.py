@@ -9,7 +9,6 @@ import sys
 from typing import Callable
 
 import dlib
-# import huggingface_hub
 import numpy as np
 import PIL.Image
 import torch
@@ -86,7 +85,6 @@ class Model:
 
     def _load_generator(self, style_type: str) -> nn.Module:
         model = DualStyleGAN(1024, 512, 8, 2, res_index=6)
-        # ckpt_path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/generator.pt')
         ckpt_path = '../checkpoint/cartoon/generator.pt'
         ckpt = torch.load(ckpt_path, map_location='cpu')
         model.load_state_dict(ckpt['g_ema'])
@@ -96,20 +94,11 @@ class Model:
 
     @staticmethod
     def _load_exstylecode(style_type: str) -> dict[str, np.ndarray]:
-        # if style_type in ['cartoon', 'caricature', 'anime']:
-        #     filename = 'refined_exstyle_code.npy'
-        # else:
-        #     filename = 'exstyle_code.npy'
-        # path = huggingface_hub.hf_hub_download(MODEL_REPO, f'models/{style_type}/{filename}')
         path = '../checkpoint/cartoon/refined_exstyle_code.npy'
         exstyles = np.load(path, allow_pickle=True).item()
         return exstyles
 
     def detect_and_align_face(self, image) -> np.ndarray:
-        # np.save("user_photo", image) # saving the image to disk
-        # path = pathlib.Path(__file__).parent.as_posix() # getting the path to where it's stored
-        # sleep(2)
-        # image = align_face(filepath=f'{path}/user_photo.npy', predictor=self.landmark_model)
         image = align_face(filepath=image, predictor=self.landmark_model)
         return image
 
@@ -135,7 +124,7 @@ class Model:
         img_rec = torch.clamp(img_rec.detach(), -1, 1)
         img_rec = self.postprocess(img_rec[0])
         # np.save("./randomface",instyle.detach().numpy())
-        return img_rec, instyle, img_rec
+        return img_rec, instyle, img_rec, instyle
     
     def encode_cartoon_face(self, image , skipAlignment: bool): # image for now is the PATH
         if skipAlignment: # DOESN'T WORK

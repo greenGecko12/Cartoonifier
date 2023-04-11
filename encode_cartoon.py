@@ -1,5 +1,5 @@
 """ 
-Encodes a cartoon into stylegan's latent space
+Encodes a cartoon face into stylegan's latent space
 """
 import numpy as np
 import torch

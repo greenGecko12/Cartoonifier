@@ -15,7 +15,4 @@ Checkpoint
     |--refined_exstyle_code.npy           % Refined extrinsic style codes of Cartoon dataset
     |--instyle_code.npy                   % (only for training) Intrinsic style codes of Cartoon dataset
     |--finetune-000600.pt                 % (only for training) StyleGAN fine-tuned on Cartoon dataset
-|--caricature
-    % the same files as in Cartoon
-...
 ```

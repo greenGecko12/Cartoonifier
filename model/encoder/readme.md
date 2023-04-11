@@ -5,5 +5,3 @@ Official Implementation of pSp paper for both training and evaluation. The pSp m
 allow solving different image-to-image translation problems using its encoder.
 
 Fork from [https://github.com/eladrich/pixel2style2pixel](https://github.com/eladrich/pixel2style2pixel).
-
-In DualStyleGAN, we modify pSp to accept z+ latent code.

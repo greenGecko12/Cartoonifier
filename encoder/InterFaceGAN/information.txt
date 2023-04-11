@@ -1,3 +1,0 @@
-Put explanation of each python file in this script. 
-
-The attributes I'm interested in is: gender, smile, pose 

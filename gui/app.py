@@ -58,11 +58,6 @@ def main():
     big = 2
     
     def modify_face(latent_code, age, gender, pose, smile):
-        # first set the latent code
-        # print(type(latent_code))
-        # print(age, gender, pose, smile)
-
-        # print(latent_code.size())
         latent_code_numpy = latent_code.cpu().detach().numpy()
         # print(latent_code_numpy.shape)
         modifier2.set_latent_code(latent_code_numpy)
@@ -220,7 +215,8 @@ def main():
                             outputs=[
                                 reconstructed_face,
                                 instyle, # intrinsic style code of shape (1,18,512)
-                                reconstructed_face_2
+                                reconstructed_face_2, 
+                                instyle_modified
                             ])
         
         # this bit corresponds to Step 5: using your own cartoon image
@@ -272,7 +268,7 @@ def main():
                                 structure_weight,
                                 color_weight,
                                 structure_only,
-                                instyle_modified, #TODO: change this to 'instyle_modified' once facial editing works
+                                instyle_modified, 
                                 style_index_2, 
                                 weight_1, 
                                 weight_2, 

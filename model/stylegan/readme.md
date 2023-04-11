@@ -4,4 +4,3 @@ Implementation of Analyzing and Improving the Image Quality of StyleGAN (https:/
 
 Fork from [https://github.com/rosinality/stylegan2-pytorch](https://github.com/rosinality/stylegan2-pytorch)
 
-In DualStyleGAN, we modify it to accept z+ latent codes.

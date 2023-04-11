@@ -7,7 +7,6 @@ Intrinsic style code == content of the image
 Changing the extrinsic style code means the same face but changing the artistic style of the image
 Changing the intrinsic style code corresponds to changing the actual face inputted
 
-
 The unseen images are given priority to the cartoon numbers
 """
 import os
@@ -26,9 +25,6 @@ from PIL import Image
 # this is the bit that does all the inferencing
 class TestOptions():
     def __init__(self):
-
-        # all the bits of info required for inferencing
-        # look at the help argument to see what each one means
         self.parser = argparse.ArgumentParser(description="Exemplar-Based Style Transfer")
 
         # The store_true option automatically creates a default value of False.
@@ -78,9 +74,6 @@ class TestOptions():
             print('%s: %s' % (str(name), str(value)))
         return self.opt    
 
-
-## WE ARE NOT IN THE CLASS ANYMORE - just functions!
-
 def run_alignment(args):
     # pre-processing, just focusing on the face and then cropping everything else? TODO: doule check exactly what this function does
     import dlib
@@ -114,19 +107,13 @@ if __name__ == "__main__":
     transforms.Normalize(mean=[0.5, 0.5, 0.5],std=[0.5,0.5,0.5]),
     ])
     
-    generator = DualStyleGAN(1024, 512, 8, 2, res_index=6) # TODO: look at the generator code next
+    generator = DualStyleGAN(1024, 512, 8, 2, res_index=6) 
     generator.eval() # in evaluation mode, doesn't keep track of gradients or anything
 
     # loading all the weights - i.e. the pre-trained model 
-    # TODO: look at the 2nd argument for the torch.load() method -> what is map_location
     ckpt = torch.load(os.path.join(args.model_path, args.style, args.model_name), map_location=lambda storage, loc: storage)
     generator.load_state_dict(ckpt["g_ema"]) # moving the trained weights into the generator
     generator = generator.to(device) # moving to GPU
-
-    # not fully sure what is happening here? Loading in another model - the encoder?
-    # I think the encoder is the thing that "encodes" the actual user image
-    # TODO: investigate this section of code a little bit more
-    ###########################################################################################
     model_path = os.path.join(args.model_path, 'encoder.pt')
     
     ckpt = torch.load(model_path, map_location='cpu') # checkpoint
@@ -134,10 +121,9 @@ if __name__ == "__main__":
     opts['checkpoint_path'] = model_path
     opts = Namespace(**opts) # passing in keyword arguments
     opts.device = device
-    encoder = pSp(opts) # (Pixel2style2pixel) pSp is the thing that generates the intermediate image
+    encoder = pSp(opts) # (Pixel2style2pixel) encoder
     encoder.eval()
     encoder.to(device)
-    ##############################################################################################
 
     # some sort of numpy array -> something about an extrinsic style?
     exstyles = np.load(os.path.join(args.model_path, args.style, args.exstyle_name), allow_pickle='TRUE').item()
@@ -145,7 +131,6 @@ if __name__ == "__main__":
     #print(exstyles['Cartoons_00440_04.jpg'].shape) # each one of these image is of shape (1, 18, 512)
 
     print('Loaded models successfully!')
-    ###########################################################################################
 
     # disable gradient calculation
     with torch.no_grad():
@@ -159,8 +144,6 @@ if __name__ == "__main__":
         viz += [I] # list contains the image
 
         # reconstructed content image and its intrinsic style code
-        # I think the encoder is the thing that does the pre-processing for the image - change eye reflection, modify smile etc.
-
         # 256 is the output dimension
         img_rec, instyle = encoder(F.adaptive_avg_pool2d(I, 256), randomize_noise=False, return_latents=True, 
                                 z_plus_latent=True, return_z_plus_latent=True, resize=False)    
@@ -181,7 +164,6 @@ if __name__ == "__main__":
 
             save_name = args.name+'_%s_%s'%(args.cartoon_image_1, os.path.basename(args.content).split('.')[0])
 
-            # TODO: need to resize these images to 1024x1024 otherwise the save_image function will complain
             S1 = load_viz_image(os.path.join(args.cartoon_path, args.cartoon_image_1)).to(device)
             viz += [S1]
             if args.cartoon_image_2 is not None:
@@ -191,7 +173,6 @@ if __name__ == "__main__":
                 S2 = load_viz_image(os.path.join(args.cartoon_path, args.cartoon_image_2)).to(device)
                 viz += [S2]
 
-                # TODO: allow the user to specify later how much of each they want in the output image
                 latent = latent.add(latent1) # addition of two tensors
                 latent = latent / 2
 
@@ -199,36 +180,16 @@ if __name__ == "__main__":
                 
         else: # this is the default code that uses the existing training images
             stylename = list(exstyles.keys())[args.style_id] # selecting the reference style image
-            # latent = torch.tensor(exstyles[stylename]).to(device) 
+            latent = torch.tensor(exstyles[stylename]).to(device) 
 
-            latent = torch.tensor(np.load("/home/sai_k/DualStyleGAN/lance.npy", allow_pickle=True)).to(device) 
+            # latent = torch.tensor(np.load("/home/sai_k/DualStyleGAN/lance.npy", allow_pickle=True)).to(device) 
 
             save_name = args.name+'_%d_%s'%(args.style_id, os.path.basename(args.content).split('.')[0])
 
-            # load style image if it exists
-            # if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
-            #     S = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
-            #     viz += [S]
-
-            # if args.style_id_2 is not None:
-            #     stylename2 = list(exstyles.keys())[args.style_id_2]
-            #     latent2 = torch.tensor(exstyles[stylename]).to(device)
-
-            #     latent = latent.add(latent2) # addition of two tensors
-            #     latent = latent / 2
-
-            #     if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
-            #         S2 = load_image(os.path.join(args.data_path, args.style, 'images/train', stylename)).to(device)
-            #         viz += [S2]
-
-            #     save_name = args.name+'_%s_%s_%s'%(args.style_id, args.style_id_2, os.path.basename(args.content).split('.')[0])
-
-        if args.preserve_color: #TODO: investigate - what is preserve_color?
+        if args.preserve_color: 
             latent[:,7:18] = instyle[:,7:18]
         # extrinsic style code
         exstyle = generator.generator.style(latent.reshape(latent.shape[0]*latent.shape[1], latent.shape[2])).reshape(latent.shape)
-        # print(latent.size())
-        # print(exstyle.size())
 
         # style transfer - WHERE the image is generated
         # input_is_latent: instyle is not in W space
@@ -250,72 +211,3 @@ if __name__ == "__main__":
     # save_image(img_gen[0].cpu(), os.path.join(args.output_path, save_name+'.jpg'))
 
     print('Saved images successfully!')
-
-
-
-#print(stylename)
-# print(exstyles.keys())
-# print(stylename)
-
-# Instead of exstyles[stylename], provide your own image by using OpenCV or PIL, and then converting into the the same shape as 
-# exstyles[stylename]
-#(1, 18, 512) shape of tensor
-
-# PIL image
-# latent = load_image_grey('./data/cartoon/images/Vanellope.jpeg').to(device);
-# print(latent.shape)
-# print(x.shape)
-# x = x.crop((left, top, right, bottom))
-
-# latent = load_image_grey("/home/sai_k/DualStyleGAN/data/cartoon/images/train/Vanellope.jpeg").to(device) # provide any other type of image
-# latent = latent.reshape((1,18,512))
-# latent1 = torch.tensor(exstyles["Cartoons_00189_01.jpg"]).to(device)
-
-# latent_avg = np.average([latent, latent1], axis=0)
-# latent_avg = torch.mean([latent, latent1], axis=0)
-
-# latent = latent.add(latent1) # addition of two tensors
-# avg = torch.mean(pt_addition_result_ex) # mean of output tensors
-
-# latent = latent /2;
-
-# print(latent.size())
-# print(exstyles[stylename].shape)
-# latent = torch.tensor(x).to(device) # provide any other type of image
-
-#print(latent.shape)
-# read as grayscale
-# from the top, crop the image
-# 18x512 = 9216
-# 96x96 = 9216
-
-#(1, 18, 512) shape of tensor
-
-# latent = load_cartoon_image("/home/sai_k/DualStyleGAN/cartoon_faces/moana.jpg").to(device)
-# latent = latent.reshape((1,18,512))
-# print(latent.size())
-
-# latent = load_cartoon_image("/home/sai_k/DualStyleGAN/cartoon_faces/barney.jpeg").to(device)
-# latent = latent.reshape((1,18,512))
-# print(latent1.size())
-
-# latent = latent.add(latent1) # addition of two tensors
-# latent = latent/2 # taking an average
-# print(latent.size())
-
-
-# load style image if it exists (and add it to the list)
-# S = None
-# if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
-
-# S1 = load_image_new("/home/sai_k/DualStyleGAN/cartoon_faces/moana.jpg").reshape((1, 18, 512)).to(device)
-# print(S1.size())
-# S2 = load_image_new("/home/sai_k/DualStyleGAN/cartoon_faces/barney.jpeg").reshape((1, 18, 512)).to(device)
-# viz += [S1, S2]
-
-# S = None
-# if os.path.exists(os.path.join(args.data_path, args.style, 'images/train', stylename)):
-# S = load_image(os.path.join(args.data_path, args.style, 'images/train', "Vanellope.jpg")).to(device)
-# S = load_image("/home/sai_k/DualStyleGAN/data/cartoon/images/train/Vanellope.jpeg").reshape((1, 18, 512)).to(device)
-# viz += [S]
-# vis += [load_image(os.path.join(args.data_path, args.style, "images/Vanellope.jpeg")).to(device)]
