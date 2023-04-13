@@ -158,7 +158,8 @@ class Model:
             return aligned_face, img_rec, exstyle
 
     def _helper(self, image, flag):
-        img_rec, exstyle, _ = self.reconstruct_face(image, flag) 
+        img_rec, exstyle, x, y = self.reconstruct_face(image, flag) 
+        # variables x & y are simply not used
         # img_rec = torch.clamp(img_rec.detach(), -1, 1)
         # img_rec = self.postprocess(img_rec[0])
 

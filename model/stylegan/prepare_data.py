@@ -1,6 +1,3 @@
-""" 
-this file isn't too important, it just makes an lmdb (some sort of 'lightning' database) file
-"""
 import argparse
 from io import BytesIO
 import multiprocessing

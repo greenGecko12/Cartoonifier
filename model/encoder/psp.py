@@ -1,6 +1,3 @@
-"""
-This file defines the core research contribution
-"""
 import matplotlib
 matplotlib.use('Agg')
 import math

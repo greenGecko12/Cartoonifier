@@ -45,7 +45,6 @@ class AdaResBlock(nn.Module):
         return out
 
 class DualStyleGAN(nn.Module):
-    # I think the constructor simply implements the architecture explained in the paper
     def __init__(self, size, style_dim, n_mlp, channel_multiplier=2, twoRes=True, res_index=6):
         super().__init__()
         
